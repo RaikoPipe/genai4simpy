@@ -1,0 +1,16 @@
+{
+  "run_name": "colossal-unyielding-flounder",
+  "dataset": "fischertechnik_lab_A",
+  "replication_index": 1,
+  "total_replications": 1,
+  "data_path": "data/fischertechnik_lab_A/block-A.csv",
+  "status": "success",
+  "error": null,
+  "traceback": null,
+  "started_at": "2026-06-29T19:37:47.261417+00:00",
+  "finished_at": "2026-06-29T21:27:02.811502+00:00",
+  "elapsed_seconds": 6554,
+  "elapsed_str": "1:49:14",
+  "run_dir": "output/fischertechnik_lab_A/colossal-unyielding-flounder",
+  "model": "qwen3.6:27b-bf16"
+}

@@ -1,0 +1,5 @@
+- [x] Phase 1: Data analysis
+- [x] Phase 2: Topology analysis
+- [x] Phase 3: Extraction planning
+- [x] Phase 4: Parameter extraction
+- [x] Phase 5: SimPy code generation & evaluation

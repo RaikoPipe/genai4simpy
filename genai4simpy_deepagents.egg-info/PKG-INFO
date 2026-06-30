@@ -1,0 +1,28 @@
+Metadata-Version: 2.4
+Name: genai4simpy-deepagents
+Version: 0.0.1
+Author-email: Richard Reider <richard@reider.io>
+License: MIT
+Requires-Python: <4.0,>=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: langgraph>=1.0.0
+Requires-Dist: langchain-openai>=0.1.22
+Requires-Dist: langchain-anthropic>=0.1.23
+Requires-Dist: langchain>=0.2.14
+Requires-Dist: langchain-fireworks>=0.1.7
+Requires-Dist: python-dotenv>=1.0.1
+Requires-Dist: langchain-tavily>=0.1
+Requires-Dist: gradio>=4.0.0
+Requires-Dist: langchain-community
+Requires-Dist: langchain-huggingface
+Requires-Dist: langchain_openai
+Requires-Dist: unstructured
+Requires-Dist: markdown
+Requires-Dist: langchain-ollama
+Requires-Dist: loguru
+Requires-Dist: sentence-transformers
+Requires-Dist: chromadb
+Requires-Dist: deep-agents
+Provides-Extra: dev
+Requires-Dist: mypy>=1.11.1; extra == "dev"
+Requires-Dist: ruff>=0.6.1; extra == "dev"

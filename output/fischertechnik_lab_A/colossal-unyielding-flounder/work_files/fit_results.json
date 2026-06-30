@@ -1,0 +1,773 @@
+{
+  "/mm/mill@mm_1": {
+    "name": "/mm/mill@mm_1",
+    "n": 5,
+    "empirical": {
+      "mean": 5.1192,
+      "std": 0.0958,
+      "min": 5.047,
+      "max": 5.282,
+      "median": 5.078
+    },
+    "all_fits": [],
+    "recommendation": {
+      "distribution": "triangular_empirical",
+      "params": {
+        "p5": 5.05,
+        "median": 5.08,
+        "p95": 5.25
+      },
+      "theoretical_mean": 5.13,
+      "valid": true,
+      "fallback": true,
+      "note": "N < 30: bounded empirical fallback (triangular p5/median/p95)"
+    },
+    "gate": "FALLBACK (N<30)"
+  },
+  "/mm/mill@mm_2": {
+    "name": "/mm/mill@mm_2",
+    "n": 1,
+    "empirical": {
+      "mean": 14.437,
+      "std": NaN,
+      "min": 14.437,
+      "max": 14.437,
+      "median": 14.437
+    },
+    "all_fits": [],
+    "recommendation": {
+      "distribution": "constant",
+      "params": {
+        "value": 14.437
+      },
+      "theoretical_mean": 14.437,
+      "valid": true,
+      "fallback": true,
+      "note": "Single observation \u2014 use constant value"
+    },
+    "gate": "FALLBACK (n=1)"
+  },
+  "/mm/deburr_pooled": {
+    "name": "/mm/deburr_pooled",
+    "n": 9,
+    "empirical": {
+      "mean": 14.4631,
+      "std": 0.3611,
+      "min": 14.046,
+      "max": 15.047,
+      "median": 14.406
+    },
+    "all_fits": [],
+    "recommendation": {
+      "distribution": "triangular_empirical",
+      "params": {
+        "p5": 14.07,
+        "median": 14.41,
+        "p95": 15.03
+      },
+      "theoretical_mean": 14.5,
+      "valid": true,
+      "fallback": true,
+      "note": "N < 30: bounded empirical fallback (triangular p5/median/p95)"
+    },
+    "gate": "FALLBACK (N<30)"
+  },
+  "/mm/drill_pooled": {
+    "name": "/mm/drill_pooled",
+    "n": 4,
+    "empirical": {
+      "mean": 14.4412,
+      "std": 6.5698,
+      "min": 5.281,
+      "max": 20.906,
+      "median": 15.789
+    },
+    "all_fits": [],
+    "recommendation": {
+      "distribution": "triangular_empirical",
+      "params": {
+        "p5": 6.82,
+        "median": 15.79,
+        "p95": 20.18
+      },
+      "theoretical_mean": 14.26,
+      "valid": true,
+      "fallback": true,
+      "note": "N < 30: bounded empirical fallback (triangular p5/median/p95)"
+    },
+    "gate": "FALLBACK (N<30)"
+  },
+  "/mm/transport_from_to@mm_2": {
+    "name": "/mm/transport_from_to@mm_2",
+    "n": 2,
+    "empirical": {
+      "mean": 12.8675,
+      "std": 0.3868,
+      "min": 12.594,
+      "max": 13.141,
+      "median": 12.8675
+    },
+    "all_fits": [],
+    "recommendation": {
+      "distribution": "triangular_empirical",
+      "params": {
+        "p5": 12.62,
+        "median": 12.87,
+        "p95": 13.11
+      },
+      "theoretical_mean": 12.87,
+      "valid": true,
+      "fallback": true,
+      "note": "N < 30: bounded empirical fallback (triangular p5/median/p95)"
+    },
+    "gate": "FALLBACK (N<30)"
+  },
+  "/ov/burn_pooled": {
+    "name": "/ov/burn_pooled",
+    "n": 12,
+    "empirical": {
+      "mean": 29.5849,
+      "std": 6.6348,
+      "min": 21.422,
+      "max": 41.782,
+      "median": 29.228
+    },
+    "all_fits": [],
+    "recommendation": {
+      "distribution": "triangular_empirical",
+      "params": {
+        "p5": 21.54,
+        "median": 29.23,
+        "p95": 39.07
+      },
+      "theoretical_mean": 29.95,
+      "valid": true,
+      "fallback": true,
+      "note": "N < 30: bounded empirical fallback (triangular p5/median/p95)"
+    },
+    "gate": "FALLBACK (N<30)"
+  },
+  "/ov/temper@ov_1": {
+    "name": "/ov/temper@ov_1",
+    "n": 5,
+    "empirical": {
+      "mean": 51.5374,
+      "std": 0.0561,
+      "min": 51.453,
+      "max": 51.61,
+      "median": 51.546
+    },
+    "all_fits": [],
+    "recommendation": {
+      "distribution": "triangular_empirical",
+      "params": {
+        "p5": 51.47,
+        "median": 51.55,
+        "p95": 51.6
+      },
+      "theoretical_mean": 51.54,
+      "valid": true,
+      "fallback": true,
+      "note": "N < 30: bounded empirical fallback (triangular p5/median/p95)"
+    },
+    "gate": "FALLBACK (N<30)"
+  },
+  "/sm/sort@sm_1": {
+    "name": "/sm/sort@sm_1",
+    "n": 4,
+    "empirical": {
+      "mean": 11.7032,
+      "std": 2.2835,
+      "min": 8.579,
+      "max": 13.953,
+      "median": 12.1405
+    },
+    "all_fits": [],
+    "recommendation": {
+      "distribution": "triangular_empirical",
+      "params": {
+        "p5": 9.04,
+        "median": 12.14,
+        "p95": 13.75
+      },
+      "theoretical_mean": 11.64,
+      "valid": true,
+      "fallback": true,
+      "note": "N < 30: bounded empirical fallback (triangular p5/median/p95)"
+    },
+    "gate": "FALLBACK (N<30)"
+  },
+  "/sm/transport@sm_1": {
+    "name": "/sm/transport@sm_1",
+    "n": 5,
+    "empirical": {
+      "mean": 19.9172,
+      "std": 1.4129,
+      "min": 18.25,
+      "max": 21.578,
+      "median": 19.414
+    },
+    "all_fits": [],
+    "recommendation": {
+      "distribution": "triangular_empirical",
+      "params": {
+        "p5": 18.43,
+        "median": 19.41,
+        "p95": 21.5
+      },
+      "theoretical_mean": 19.78,
+      "valid": true,
+      "fallback": true,
+      "note": "N < 30: bounded empirical fallback (triangular p5/median/p95)"
+    },
+    "gate": "FALLBACK (N<30)"
+  },
+  "/sm/transport@sm_2": {
+    "name": "/sm/transport@sm_2",
+    "n": 4,
+    "empirical": {
+      "mean": 14.531,
+      "std": 0.1296,
+      "min": 14.39,
+      "max": 14.656,
+      "median": 14.539
+    },
+    "all_fits": [],
+    "recommendation": {
+      "distribution": "triangular_empirical",
+      "params": {
+        "p5": 14.4,
+        "median": 14.54,
+        "p95": 14.65
+      },
+      "theoretical_mean": 14.53,
+      "valid": true,
+      "fallback": true,
+      "note": "N < 30: bounded empirical fallback (triangular p5/median/p95)"
+    },
+    "gate": "FALLBACK (N<30)"
+  },
+  "/dm/lower@dm_2": {
+    "name": "/dm/lower@dm_2",
+    "n": 2,
+    "empirical": {
+      "mean": 14.008,
+      "std": 0.1881,
+      "min": 13.875,
+      "max": 14.141,
+      "median": 14.008
+    },
+    "all_fits": [],
+    "recommendation": {
+      "distribution": "triangular_empirical",
+      "params": {
+        "p5": 13.89,
+        "median": 14.01,
+        "p95": 14.13
+      },
+      "theoretical_mean": 14.01,
+      "valid": true,
+      "fallback": true,
+      "note": "N < 30: bounded empirical fallback (triangular p5/median/p95)"
+    },
+    "gate": "FALLBACK (N<30)"
+  },
+  "/dm/cylindrical_drill@dm_2": {
+    "name": "/dm/cylindrical_drill@dm_2",
+    "n": 2,
+    "empirical": {
+      "mean": 23.992,
+      "std": 2.861,
+      "min": 21.969,
+      "max": 26.015,
+      "median": 23.992
+    },
+    "all_fits": [],
+    "recommendation": {
+      "distribution": "triangular_empirical",
+      "params": {
+        "p5": 22.17,
+        "median": 23.99,
+        "p95": 25.81
+      },
+      "theoretical_mean": 23.99,
+      "valid": true,
+      "fallback": true,
+      "note": "N < 30: bounded empirical fallback (triangular p5/median/p95)"
+    },
+    "gate": "FALLBACK (N<30)"
+  },
+  "/pm/punch_gill@pm_1": {
+    "name": "/pm/punch_gill@pm_1",
+    "n": 1,
+    "empirical": {
+      "mean": 27.484,
+      "std": NaN,
+      "min": 27.484,
+      "max": 27.484,
+      "median": 27.484
+    },
+    "all_fits": [],
+    "recommendation": {
+      "distribution": "constant",
+      "params": {
+        "value": 27.484
+      },
+      "theoretical_mean": 27.484,
+      "valid": true,
+      "fallback": true,
+      "note": "Single observation \u2014 use constant value"
+    },
+    "gate": "FALLBACK (n=1)"
+  },
+  "/pm/punch_recesses@pm_1": {
+    "name": "/pm/punch_recesses@pm_1",
+    "n": 2,
+    "empirical": {
+      "mean": 23.6405,
+      "std": 0.2652,
+      "min": 23.453,
+      "max": 23.828,
+      "median": 23.6405
+    },
+    "all_fits": [],
+    "recommendation": {
+      "distribution": "triangular_empirical",
+      "params": {
+        "p5": 23.47,
+        "median": 23.64,
+        "p95": 23.81
+      },
+      "theoretical_mean": 23.64,
+      "valid": true,
+      "fallback": true,
+      "note": "N < 30: bounded empirical fallback (triangular p5/median/p95)"
+    },
+    "gate": "FALLBACK (N<30)"
+  },
+  "/pm/punch_ribbing@pm_1": {
+    "name": "/pm/punch_ribbing@pm_1",
+    "n": 2,
+    "empirical": {
+      "mean": 27.3905,
+      "std": 5.4143,
+      "min": 23.562,
+      "max": 31.219,
+      "median": 27.3905
+    },
+    "all_fits": [],
+    "recommendation": {
+      "distribution": "triangular_empirical",
+      "params": {
+        "p5": 23.94,
+        "median": 27.39,
+        "p95": 30.84
+      },
+      "theoretical_mean": 27.39,
+      "valid": true,
+      "fallback": true,
+      "note": "N < 30: bounded empirical fallback (triangular p5/median/p95)"
+    },
+    "gate": "FALLBACK (N<30)"
+  },
+  "/hbw/unload@hbw_2": {
+    "name": "/hbw/unload@hbw_2",
+    "n": 13,
+    "empirical": {
+      "mean": 38.9546,
+      "std": 6.2915,
+      "min": 32.735,
+      "max": 52.248,
+      "median": 36.5
+    },
+    "all_fits": [],
+    "recommendation": {
+      "distribution": "triangular_empirical",
+      "params": {
+        "p5": 32.86,
+        "median": 36.5,
+        "p95": 50.45
+      },
+      "theoretical_mean": 39.93,
+      "valid": true,
+      "fallback": true,
+      "note": "N < 30: bounded empirical fallback (triangular p5/median/p95)"
+    },
+    "gate": "FALLBACK (N<30)"
+  },
+  "/hbw/store_empty_bucket@hbw_2": {
+    "name": "/hbw/store_empty_bucket@hbw_2",
+    "n": 13,
+    "empirical": {
+      "mean": 40.6808,
+      "std": 8.063,
+      "min": 32.641,
+      "max": 65.141,
+      "median": 38.563
+    },
+    "all_fits": [],
+    "recommendation": {
+      "distribution": "triangular_empirical",
+      "params": {
+        "p5": 33.79,
+        "median": 38.56,
+        "p95": 52.93
+      },
+      "theoretical_mean": 41.76,
+      "valid": true,
+      "fallback": true,
+      "note": "N < 30: bounded empirical fallback (triangular p5/median/p95)"
+    },
+    "gate": "FALLBACK (N<30)"
+  },
+  "/hbw/get_empty_bucket@hbw_1": {
+    "name": "/hbw/get_empty_bucket@hbw_1",
+    "n": 11,
+    "empirical": {
+      "mean": 37.0619,
+      "std": 5.0379,
+      "min": 30.797,
+      "max": 48.594,
+      "median": 36.219
+    },
+    "all_fits": [],
+    "recommendation": {
+      "distribution": "triangular_empirical",
+      "params": {
+        "p5": 31.18,
+        "median": 36.22,
+        "p95": 46.11
+      },
+      "theoretical_mean": 37.84,
+      "valid": true,
+      "fallback": true,
+      "note": "N < 30: bounded empirical fallback (triangular p5/median/p95)"
+    },
+    "gate": "FALLBACK (N<30)"
+  },
+  "/hbw/store@hbw_1": {
+    "name": "/hbw/store@hbw_1",
+    "n": 3,
+    "empirical": {
+      "mean": 37.9847,
+      "std": 3.9507,
+      "min": 34.641,
+      "max": 42.344,
+      "median": 36.969
+    },
+    "all_fits": [],
+    "recommendation": {
+      "distribution": "triangular_empirical",
+      "params": {
+        "p5": 34.87,
+        "median": 36.97,
+        "p95": 41.81
+      },
+      "theoretical_mean": 37.88,
+      "valid": true,
+      "fallback": true,
+      "note": "N < 30: bounded empirical fallback (triangular p5/median/p95)"
+    },
+    "gate": "FALLBACK (N<30)"
+  },
+  "/hw/human_review@hw_1": {
+    "name": "/hw/human_review@hw_1",
+    "n": 14,
+    "empirical": {
+      "mean": 13.9959,
+      "std": 19.21,
+      "min": 0.438,
+      "max": 62.25,
+      "median": 3.75
+    },
+    "all_fits": [],
+    "recommendation": {
+      "distribution": "triangular_empirical",
+      "params": {
+        "p5": 1.23,
+        "median": 3.75,
+        "p95": 52.84
+      },
+      "theoretical_mean": 19.27,
+      "valid": true,
+      "fallback": true,
+      "note": "N < 30: bounded empirical fallback (triangular p5/median/p95)"
+    },
+    "gate": "FALLBACK (N<30)"
+  },
+  "vgr1_dm2->ov1": {
+    "name": "vgr1_dm2->ov1",
+    "n": 9,
+    "empirical": {
+      "mean": 53.8689,
+      "std": 13.9998,
+      "min": 41.563,
+      "max": 88.375,
+      "median": 51.032
+    },
+    "all_fits": [],
+    "recommendation": {
+      "distribution": "triangular_empirical",
+      "params": {
+        "p5": 42.25,
+        "median": 51.03,
+        "p95": 76.81
+      },
+      "theoretical_mean": 56.7,
+      "valid": true,
+      "fallback": true,
+      "note": "N < 30: bounded empirical fallback (triangular p5/median/p95)"
+    },
+    "gate": "FALLBACK (N<30)"
+  },
+  "vgr1_dm2->hw1": {
+    "name": "vgr1_dm2->hw1",
+    "n": 5,
+    "empirical": {
+      "mean": 51.745,
+      "std": 13.3719,
+      "min": 37.891,
+      "max": 70.531,
+      "median": 46.812
+    },
+    "all_fits": [],
+    "recommendation": {
+      "distribution": "triangular_empirical",
+      "params": {
+        "p5": 38.95,
+        "median": 46.81,
+        "p95": 68.48
+      },
+      "theoretical_mean": 51.42,
+      "valid": true,
+      "fallback": true,
+      "note": "N < 30: bounded empirical fallback (triangular p5/median/p95)"
+    },
+    "gate": "FALLBACK (N<30)"
+  },
+  "vgr1_hw1->hbw1_wait": {
+    "name": "vgr1_hw1->hbw1_wait",
+    "n": 11,
+    "empirical": {
+      "mean": 25.2433,
+      "std": 8.1438,
+      "min": 19.578,
+      "max": 40.175,
+      "median": 20.813
+    },
+    "all_fits": [],
+    "recommendation": {
+      "distribution": "triangular_empirical",
+      "params": {
+        "p5": 19.6,
+        "median": 20.81,
+        "p95": 38.4
+      },
+      "theoretical_mean": 26.27,
+      "valid": true,
+      "fallback": true,
+      "note": "N < 30: bounded empirical fallback (triangular p5/median/p95)"
+    },
+    "gate": "FALLBACK (N<30)"
+  },
+  "vgr1_hbw1_wait->hbw1": {
+    "name": "vgr1_hbw1_wait->hbw1",
+    "n": 3,
+    "empirical": {
+      "mean": 20.8223,
+      "std": 6.6816,
+      "min": 13.109,
+      "max": 24.827,
+      "median": 24.531
+    },
+    "all_fits": [],
+    "recommendation": {
+      "distribution": "triangular_empirical",
+      "params": {
+        "p5": 14.25,
+        "median": 24.53,
+        "p95": 24.8
+      },
+      "theoretical_mean": 21.19,
+      "valid": true,
+      "fallback": true,
+      "note": "N < 30: bounded empirical fallback (triangular p5/median/p95)"
+    },
+    "gate": "FALLBACK (N<30)"
+  },
+  "vgr1_pm1->hw1": {
+    "name": "vgr1_pm1->hw1",
+    "n": 5,
+    "empirical": {
+      "mean": 48.294,
+      "std": 6.2616,
+      "min": 42.329,
+      "max": 57.125,
+      "median": 48.485
+    },
+    "all_fits": [],
+    "recommendation": {
+      "distribution": "triangular_empirical",
+      "params": {
+        "p5": 42.34,
+        "median": 48.48,
+        "p95": 55.93
+      },
+      "theoretical_mean": 48.92,
+      "valid": true,
+      "fallback": true,
+      "note": "N < 30: bounded empirical fallback (triangular p5/median/p95)"
+    },
+    "gate": "FALLBACK (N<30)"
+  },
+  "vgr1_sm1_sink->hw1": {
+    "name": "vgr1_sm1_sink->hw1",
+    "n": 4,
+    "empirical": {
+      "mean": 40.591,
+      "std": 1.3383,
+      "min": 39.333,
+      "max": 42.031,
+      "median": 40.5
+    },
+    "all_fits": [],
+    "recommendation": {
+      "distribution": "triangular_empirical",
+      "params": {
+        "p5": 39.37,
+        "median": 40.5,
+        "p95": 41.94
+      },
+      "theoretical_mean": 40.6,
+      "valid": true,
+      "fallback": true,
+      "note": "N < 30: bounded empirical fallback (triangular p5/median/p95)"
+    },
+    "gate": "FALLBACK (N<30)"
+  },
+  "vgr2_hbw2->dm2": {
+    "name": "vgr2_hbw2->dm2",
+    "n": 8,
+    "empirical": {
+      "mean": 43.4081,
+      "std": 2.2318,
+      "min": 38.046,
+      "max": 45.297,
+      "median": 44.0705
+    },
+    "all_fits": [],
+    "recommendation": {
+      "distribution": "triangular_empirical",
+      "params": {
+        "p5": 39.98,
+        "median": 44.07,
+        "p95": 44.97
+      },
+      "theoretical_mean": 43.01,
+      "valid": true,
+      "fallback": true,
+      "note": "N < 30: bounded empirical fallback (triangular p5/median/p95)"
+    },
+    "gate": "FALLBACK (N<30)"
+  },
+  "vgr2_hbw2->ov2": {
+    "name": "vgr2_hbw2->ov2",
+    "n": 6,
+    "empirical": {
+      "mean": 36.5648,
+      "std": 0.5452,
+      "min": 35.734,
+      "max": 37.265,
+      "median": 36.601
+    },
+    "all_fits": [],
+    "recommendation": {
+      "distribution": "triangular_empirical",
+      "params": {
+        "p5": 35.86,
+        "median": 36.6,
+        "p95": 37.18
+      },
+      "theoretical_mean": 36.55,
+      "valid": true,
+      "fallback": true,
+      "note": "N < 30: bounded empirical fallback (triangular p5/median/p95)"
+    },
+    "gate": "FALLBACK (N<30)"
+  },
+  "vgr2_sm2_sink->dm2": {
+    "name": "vgr2_sm2_sink->dm2",
+    "n": 2,
+    "empirical": {
+      "mean": 43.437,
+      "std": 0.2659,
+      "min": 43.249,
+      "max": 43.625,
+      "median": 43.437
+    },
+    "all_fits": [],
+    "recommendation": {
+      "distribution": "triangular_empirical",
+      "params": {
+        "p5": 43.27,
+        "median": 43.44,
+        "p95": 43.61
+      },
+      "theoretical_mean": 43.44,
+      "valid": true,
+      "fallback": true,
+      "note": "N < 30: bounded empirical fallback (triangular p5/median/p95)"
+    },
+    "gate": "FALLBACK (N<30)"
+  },
+  "wt1_ov1->mm1": {
+    "name": "wt1_ov1->mm1",
+    "n": 8,
+    "empirical": {
+      "mean": 26.0945,
+      "std": 0.1843,
+      "min": 25.906,
+      "max": 26.365,
+      "median": 26.047
+    },
+    "all_fits": [],
+    "recommendation": {
+      "distribution": "triangular_empirical",
+      "params": {
+        "p5": 25.92,
+        "median": 26.05,
+        "p95": 26.36
+      },
+      "theoretical_mean": 26.11,
+      "valid": true,
+      "fallback": true,
+      "note": "N < 30: bounded empirical fallback (triangular p5/median/p95)"
+    },
+    "gate": "FALLBACK (N<30)"
+  },
+  "wt2_ov2->mm2": {
+    "name": "wt2_ov2->mm2",
+    "n": 6,
+    "empirical": {
+      "mean": 29.0868,
+      "std": 0.1649,
+      "min": 28.875,
+      "max": 29.235,
+      "median": 29.151
+    },
+    "all_fits": [],
+    "recommendation": {
+      "distribution": "triangular_empirical",
+      "params": {
+        "p5": 28.88,
+        "median": 29.15,
+        "p95": 29.23
+      },
+      "theoretical_mean": 29.09,
+      "valid": true,
+      "fallback": true,
+      "note": "N < 30: bounded empirical fallback (triangular p5/median/p95)"
+    },
+    "gate": "FALLBACK (N<30)"
+  }
+}

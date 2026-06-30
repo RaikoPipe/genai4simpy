@@ -1,0 +1,16 @@
+{
+  "run_name": "silent-xanthic-worm",
+  "dataset": "fischertechnik_lab_B",
+  "replication_index": 1,
+  "total_replications": 1,
+  "data_path": "data/fischertechnik_lab_B/block-B.csv",
+  "status": "success",
+  "error": null,
+  "traceback": null,
+  "started_at": "2026-06-29T22:26:28.611268+00:00",
+  "finished_at": "2026-06-30T00:24:01.553057+00:00",
+  "elapsed_seconds": 7052,
+  "elapsed_str": "1:57:31",
+  "run_dir": "output/fischertechnik_lab_B/silent-xanthic-worm",
+  "model": "qwen3.6-27b-bf16"
+}
