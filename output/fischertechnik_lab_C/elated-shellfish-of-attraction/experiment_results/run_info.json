@@ -1,0 +1,16 @@
+{
+  "run_name": "elated-shellfish-of-attraction",
+  "dataset": "fischertechnik_lab_C",
+  "replication_index": 1,
+  "total_replications": 1,
+  "data_path": "data/fischertechnik_lab_C/block-C.csv",
+  "status": "success",
+  "error": null,
+  "traceback": null,
+  "started_at": "2026-06-29T15:27:01.634227+00:00",
+  "finished_at": "2026-06-29T17:52:27.324428+00:00",
+  "elapsed_seconds": 8724,
+  "elapsed_str": "2:25:24",
+  "run_dir": "output/fischertechnik_lab_C/elated-shellfish-of-attraction",
+  "model": "qwen3.6-27b"
+}

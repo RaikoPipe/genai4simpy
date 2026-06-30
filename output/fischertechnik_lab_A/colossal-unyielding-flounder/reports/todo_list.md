@@ -1,0 +1,5 @@
+- [x] Phase 1: Data analysis — column mapping
+- [x] Phase 2: Topology analysis — resources, routing, special conditions
+- [x] Phase 3: Extraction planning — determine which extraction agents to deploy
+- [x] Phase 4: Parameter extraction — durations, inter-arrival times, quantities, distributions
+- [x] Phase 5: SimPy code generation, iterative validation, and evaluation

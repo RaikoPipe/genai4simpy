@@ -1,0 +1,252 @@
+Metadata-Version: 2.4
+Name: genai4simpy-deepagents
+Version: 0.0.1
+Author-email: Richard Reider <richard@reider.io>
+License: MIT
+Requires-Python: <4.0,>=3.11
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: langgraph>=1.0.0
+Requires-Dist: langchain-openai>=0.1.22
+Requires-Dist: langchain-anthropic>=0.1.23
+Requires-Dist: langchain>=0.2.14
+Requires-Dist: langchain-fireworks>=0.1.7
+Requires-Dist: python-dotenv>=1.0.1
+Requires-Dist: langchain-tavily>=0.1
+Requires-Dist: gradio>=4.0.0
+Requires-Dist: langchain-community
+Requires-Dist: langchain-huggingface
+Requires-Dist: langchain_openai
+Requires-Dist: unstructured
+Requires-Dist: markdown
+Requires-Dist: langchain-ollama
+Requires-Dist: loguru
+Requires-Dist: sentence-transformers
+Requires-Dist: chromadb
+Requires-Dist: deepagents
+Requires-Dist: langgraph-cli[inmem]
+Requires-Dist: pyarrow
+Requires-Dist: fastparquet
+Provides-Extra: dev
+Requires-Dist: mypy>=1.11.1; extra == "dev"
+Requires-Dist: ruff>=0.6.1; extra == "dev"
+Dynamic: license-file
+
+# GenAI4SimPy — Deep Agents
+
+> **Automatically generate executable [SimPy](https://simpy.readthedocs.io/) discrete-event simulation models from manufacturing event logs using a multi-agent LLM pipeline.**
+
+---
+
+## Overview
+
+`genai4simpy-deepagents` orchestrates three specialised AI agents that take a raw production event log (CSV) and — through data analysis, parameter extraction, and code generation — produce a validated, runnable SimPy simulation.
+
+The system is built on the **[DeepAgents](https://github.com/RaikoPipe/deepagents)** framework for hierarchical agent orchestration and **LangGraph** for the SimPy code-generation workflow. All inference runs locally via **Ollama** (default model: `qwen3.5:27b`).
+
+---
+
+## Architecture
+
+### Three-Agent Pipeline
+
+```
+┌─────────────────────────────────────────────────────────┐
+│              Workflow Orchestrator (Master)              │
+│   Coordinates phases · Full report access · Resumption  │
+└──────────────┬──────────────────┬───────────────────────┘
+               │                  │                   │
+    ┌──────────▼──────┐  ┌────────▼──────┐  ┌────────▼──────────┐
+    │  Phase 1        │  │  Phase 2      │  │  Phase 3          │
+    │  Data Analysis  │  │  Parameter    │  │  SimPy Code       │
+    │  Sub-Agent      │  │  Extraction   │  │  Agent (LangGraph)│
+    └─────────────────┘  └───────────────┘  └───────────────────┘
+    Output:              Reads Phase 1,     Reads Phase 2,
+    column_mapping       outputs param      generates & validates
+    _report.md           _extraction_       simulation code
+                         report.md
+```
+
+Each sub-agent has **role-based report access** — it can only read the reports it needs and write the report it owns. The orchestrator checks for existing reports on startup and **skips completed phases**, allowing interrupted runs to resume.
+
+### SimPy Code Agent Workflow (LangGraph)
+
+![SimPy Code Agent Workflow](simpy_code_agent_workflow.png)
+
+The code agent runs an iterative generate → validate → repair loop (max 5 iterations):
+
+| Node | Description |
+|---|---|
+| `knowledge_retrieval` | Fetches relevant SimPy docs from embedded Chroma vectorstore |
+| `reasoning_step` | Analyses the manufacturing system structure |
+| `code_generation` | Generates initial SimPy code from parameters |
+| `determine_editing_steps` | Plans structured `str_replace` edits on existing code |
+| `code_editing` | Applies planned edits |
+| `code_validation` | Executes the code in a subprocess; routes to repair on failure |
+
+---
+
+## Features
+
+- **End-to-end automation** — from raw CSV to validated simulation code
+- **Phase resumption** — skip already-completed analysis phases
+- **Statistical distribution fitting** — tests 7 scipy distributions and picks the best fit (KS test)
+- **Embedded SimPy knowledge** — API reference always loaded; examples/guides retrieved via semantic search
+- **Self-hosted LLM** — runs fully locally via Ollama (no API keys required)
+- **Role-based agent access control** — prevents agents from accessing or overwriting irrelevant reports
+- **Structured code editing** — LLM produces `str_replace` diffs rather than full rewrites
+
+---
+
+## Project Structure
+
+```
+genai4simpy-deepagents/
+├── agent.py                            # Entry point — orchestrator setup
+├── pyproject.toml
+├── langgraph.json                      # LangServe deployment config
+├── simpy_code_agent_workflow.png       # Workflow diagram
+│
+├── data/
+│   └── production_data/
+│       └── Production_Data.csv         # Input event log
+│
+├── reports/                            # Agent outputs (auto-generated)
+│   ├── column_mapping_report.md
+│   └── parameter_extraction_report.md
+│
+└── src/
+    ├── genai4simpy_agent/
+    │   ├── prompts.py                  # System instructions for all agents
+    │   └── tools.py                   # Report read/write/check tools
+    │
+    ├── data_extraction_tools/
+    │   └── tools.py                   # Dataset exploration & statistics tools
+    │
+    └── simpy_code_workflow/
+        ├── graph.py                   # LangGraph code-generation workflow
+        ├── tool.py                    # Tool wrapper for orchestrator
+        ├── prompts/                   # Prompt files (Markdown)
+        ├── context_engineering/       # Vectorstore + SimPy docs
+        └── data_models/
+            └── simple_model.py        # Pydantic schemas for simulation config
+```
+
+---
+
+## Requirements
+
+- Python **3.11+**
+- [Ollama](https://ollama.com/) running locally with `qwen3.5:27b` pulled
+
+```bash
+ollama pull qwen3.5:27b
+```
+
+---
+
+## Installation
+
+```bash
+git clone <repo-url>
+cd genai4simpy-deepagents
+
+# Standard install
+pip install -e .
+
+# With dev tools (mypy, ruff, pytest)
+pip install -e ".[dev]"
+```
+
+---
+
+## Usage
+
+### Run the full pipeline
+
+```bash
+python agent.py
+```
+
+The pipeline will:
+1. Convert `data/production_data/Production_Data.csv` → `data/eventlog.parquet`
+2. Check for existing phase reports and skip completed phases
+3. **Phase 1** — Analyse the dataset, detect column roles, ask for user confirmation, write `reports/column_mapping_report.md`
+4. **Phase 2** — Extract processing times, inter-arrival distributions, routing patterns, write `reports/parameter_extraction_report.md`
+5. **Phase 3** — Generate, validate, and repair a SimPy simulation and return the code
+
+### Deploy via LangServe
+
+```bash
+langgraph up
+```
+
+Exposes two endpoints:
+- `http://localhost:8000/agent/` — Full orchestrator
+- `http://localhost:8000/simpy_code_agent/` — SimPy code agent only
+
+---
+
+## Configuration
+
+| Location | Parameter | Description |
+|---|---|---|
+| `agent.py` | `model="qwen3.5:27b"` | Ollama model for orchestration |
+| `agent.py` | `base_url="http://localhost:11434"` | Ollama server URL |
+| `agent.py` | `max_output_tokens=64000` | Token budget for code generation |
+| `graph.py` | `max_iterations = 5` | Max code repair loop iterations |
+| `tools.py` | `REPORTS_DIR = "reports"` | Output directory for phase reports |
+
+---
+
+## How It Works — In Detail
+
+### Phase 1: Data Analysis
+
+The data-analysis sub-agent uses a set of inspection tools to:
+- Summarise dataset shape, dtypes, missing values, and duplicates
+- Heuristically classify columns as timestamps, case IDs, resource identifiers, product types, or durations
+- Output a structured column-mapping report which the user confirms before Phase 2 begins
+
+### Phase 2: Parameter Extraction
+
+The extraction sub-agent reads the confirmed column mapping and:
+- Computes **processing times** per resource (mean, std, percentiles)
+- Computes **inter-arrival times** per job type (coefficient of variation, mean IAT)
+- **Fits statistical distributions** (normal, exponential, lognormal, gamma, Weibull, uniform, triangular) using the KS test and selects the best fit
+- Identifies routing patterns and system structure
+
+### Phase 3: SimPy Code Generation
+
+The LangGraph workflow:
+1. Retrieves relevant SimPy documentation from an embedded vectorstore (HuggingFace `all-MiniLM-L6-v2` + Chroma)
+2. Reasons about the manufacturing system structure
+3. Generates initial code using the extracted parameters
+4. Validates the code by executing it in a subprocess
+5. On failure, plans structured `str_replace` edits and re-validates (up to 5 attempts)
+
+---
+
+## Tech Stack
+
+| Category | Library |
+|---|---|
+| Agent orchestration | `deepagents`, `langchain`, `langgraph` |
+| LLM backend | `langchain-ollama` (Qwen 3.5 27B) |
+| Data processing | `pandas`, `numpy`, `scipy` |
+| Vector search | `chromadb`, `sentence-transformers` |
+| Data validation | `pydantic` |
+| Logging | `loguru` |
+| Linting | `ruff` |
+
+---
+
+## License
+
+MIT — see [LICENSE](LICENSE).
+
+---
+
+## Author
+
+Richard Reider — richard@reider.io

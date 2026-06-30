@@ -1,0 +1,2 @@
+Partial slice. Only 3/18 cases reach /hbw/store, so routings are the longest observed trace per variant, not guaranteed-complete sequences. The two cases per variant have inconsistent lengths due to window truncation. Throughput and flow-time are window-bounded.
+Thin samples. Several activities have n=1–2 (e.g. /pm/punch_gill n=1, std undefined → set to 0.0), so duration stats are low-confidence. /dm/drill from the example doesn't appear in this block at all.
