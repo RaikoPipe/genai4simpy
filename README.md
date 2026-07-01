@@ -25,26 +25,19 @@ The system is built on the **[DeepAgents](https://github.com/RaikoPipe/deepagent
 
 ## Architecture
 
-### Three-Agent Pipeline
+### Multi-Agent Pipeline
 
-```
-┌─────────────────────────────────────────────────────────┐
-│              Workflow Orchestrator (Master)              │
-│   Coordinates phases · Full report access · Resumption  │
-└──────────────┬──────────────────┬───────────────────────┘
-               │                  │                   │
-    ┌──────────▼──────┐  ┌────────▼──────┐  ┌────────▼──────────┐
-    │  Phase 1        │  │  Phase 2      │  │  Phase 3          │
-    │  Data Analysis  │  │  Parameter    │  │  SimPy Code       │
-    │  Sub-Agent      │  │  Extraction   │  │  Agent (LangGraph)│
-    └─────────────────┘  └───────────────┘  └───────────────────┘
-    Output:              Reads Phase 1,     Reads Phase 2,
-    column_mapping       outputs param      generates & validates
-    _report.md           _extraction_       simulation code
-                         report.md
-```
+![GenAI4SimPy Architecture](genai4simpy-architecture.png)
 
-Each sub-agent has **role-based report access** — it can only read the reports it needs and write the report it owns. The orchestrator checks for existing reports on startup and **skips completed phases**, allowing interrupted runs to resume.
+A **Workflow Orchestrator** drives the pipeline under human-in-the-loop supervision, with a **Domain Expert** validating results at each phase transition:
+
+1. **Data Analysis** — column mapping, cleaning, and relevance classification of the raw event log
+2. **Topology Analysis** — resources, routing, pooling, and special conditions
+3. **Extraction Planning** — recommends agent deployment and builds the extraction plan
+4. **Parameter Extraction** — duration analysis, inter-arrival patterns, and failures/reworks feed into distribution fitting
+5. **Simulation Generation & Evaluation** — the **SimPy Deep Coding Agent** generates, executes, edits, and validates the simulation in a repair loop, while the **Simulation Evaluator** cross-checks the resulting code against the extraction reports before iterating again
+
+The result is a **validated SimPy simulation**. Each sub-agent has **role-based report access** — it can only read the reports it needs and write the report it owns — and the orchestrator checks for existing reports on startup, **skipping completed phases** to allow interrupted runs to resume.
 
 ### SimPy Code Agent Workflow (LangGraph)
 
