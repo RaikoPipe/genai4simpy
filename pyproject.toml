@@ -19,7 +19,6 @@ dependencies = [
     "gradio>=4.0.0",
     "langchain-community",
     "langchain-huggingface",
-    "langchain_openai",
     "unstructured",
     "markdown",
     "langchain-ollama",
@@ -30,7 +29,13 @@ dependencies = [
     "langgraph-cli[inmem]",
     "pyarrow",
     "fastparquet",
-    "coolname>=2.2.0"
+    "coolname>=2.2.0",
+    "simpy",
+    "numpy",
+    "pandas",
+    "scipy",
+    "matplotlib",
+    "httpx",
 ]
 
 
