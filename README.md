@@ -226,6 +226,34 @@ python forest_plot.py
 
 Renders the per-block confidence-interval forest plots (coverage KPIs and threshold KPIs) shown as Figure 2 in the WSC paper, saved to `forest_plot_v3.png` / `forest_plot_v3.pdf`. The per-block KPI values are currently hardcoded from the paper's results at the top of the script — update them there to plot a new evaluation run.
 
+### 4. Window-consistent re-evaluation (`evaluate_v2.py`)
+
+`evaluate_v2.py` fixes several shortcomings of `evaluate.py`. It computes ground truth straight from the raw block CSV, using the **same** KPI function that it applies to the simulated log, so it needs no hand-written `ground_truth_block_*.py` constants. KPI bases are the same for every block: completed cases (a successful `/hbw/store` inside the window) and cases entered. Verdicts use a 95% **prediction interval** over per-replication KPIs, the GT percentile rank, bias and the median per-replication error; the CI of the mean is kept for reference only. Activity MAPE runs over all GT activities, and any activity a model is missing scores 100%. The output also includes a flow-time decomposition (service union / overlap / idle) and idle time per resource class. If you pass several `--models` (runs for one block), it also reports a between-run PI over the run means.
+
+```bash
+python evaluate_v2.py \
+  --models output/fischertechnik_lab_C/<run-name>/reports/simulation/simulation.py \
+  --block-csv data/fischertechnik_lab_C/block-C.csv \
+  -m 1000 -o eval_v2_out
+```
+
+Results are written to `<output>/evaluation_v2.json` and `<output>/replications_v2.csv`.
+
+### 5. Follow-up analyses (`analysis/`)
+
+These scripts reproduce the re-analysis of the three paper models. The model run names are set in `analysis/_common.py`. Each script writes its output to the current working directory. You set the replication count with an environment variable.
+
+| Script | Purpose | Output |
+|---|---|---|
+| `analysis/reeval.py` (`M_REPS`, default 500) | Compares the published `evaluate.py` harness with unified, window-consistent KPI definitions (PI + GT percentile) | `reeval_A2_A5.csv`, `reeval_meta.json`, `reps_*.csv` |
+| `analysis/counterfactual.py` (`M`, default 300) | Swaps FIFO hbw resources for priority resources, where in-process cases go ahead of new `/hbw/unload` orders | `counterfactual_hbw_priority.json` |
+| `analysis/crossblock.py` (`M`, default 300) | Hold-out test: every model scored on every block, in both arms, against a "copy source statistics" baseline | `crossblock_A1.csv` |
+| `analysis/probe.py` | Diagnostics: hbw/vgr usage, unload spacing, utilisation and pre-activity gaps, real vs. simulated | stdout |
+
+```bash
+M=300 python analysis/counterfactual.py
+```
+
 ---
 
 ## Configuration
