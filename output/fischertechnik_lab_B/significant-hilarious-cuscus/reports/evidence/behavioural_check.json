@@ -1,0 +1,255 @@
+{
+  "ok": true,
+  "replications": 30,
+  "T_s": 5943.7,
+  "terminal_activity": "/hbw/store",
+  "kpis": {
+    "completed_cases": {
+      "mean": 15.467,
+      "pi_lo": 6.175,
+      "pi_hi": 23.375,
+      "gt": 14,
+      "bias_pct": 10.476,
+      "pi_covered": true
+    },
+    "cases_entered": {
+      "mean": 41.833,
+      "pi_lo": 20.9,
+      "pi_hi": 56.825,
+      "gt": 38,
+      "bias_pct": 10.088,
+      "pi_covered": true
+    },
+    "wip_at_T": {
+      "mean": 26.367,
+      "pi_lo": 12.175,
+      "pi_hi": 37.2,
+      "gt": 24,
+      "bias_pct": 9.861,
+      "pi_covered": true
+    },
+    "flow_time_completed_s": {
+      "mean": 734.955,
+      "pi_lo": 452.364,
+      "pi_hi": 1070.41,
+      "gt": 710.346,
+      "bias_pct": 3.464,
+      "pi_covered": true
+    },
+    "time_in_system_all_s": {
+      "mean": 564.132,
+      "pi_lo": 398.549,
+      "pi_hi": 803.557,
+      "gt": 539.317,
+      "bias_pct": 4.601,
+      "pi_covered": true
+    },
+    "failure_rate": {
+      "mean": 0.011,
+      "pi_lo": 0.002,
+      "pi_hi": 0.017,
+      "gt": 0.02,
+      "bias_pct": -44.758,
+      "pi_covered": false
+    },
+    "overlapping_steps_per_case": {
+      "mean": 0.931,
+      "pi_lo": 0.492,
+      "pi_hi": 1.5,
+      "gt": 1.571,
+      "bias_pct": -40.756,
+      "pi_covered": false
+    },
+    "idle_s": {
+      "mean": 258.083,
+      "pi_lo": 20.073,
+      "pi_hi": 565.454,
+      "gt": 268.01,
+      "bias_pct": -3.704,
+      "pi_covered": true
+    },
+    "activity_mape": {
+      "mean": 6.389,
+      "pi_lo": 3.649,
+      "pi_hi": 11.143
+    },
+    "activity_coverage": {
+      "mean": 0.998,
+      "pi_lo": 0.986,
+      "pi_hi": 1.0
+    },
+    "variant_jsd": {
+      "mean": 0.043,
+      "pi_lo": 0.013,
+      "pi_hi": 0.089
+    },
+    "utilization_mae_pp": {
+      "mean": 5.35,
+      "pi_lo": 1.607,
+      "pi_hi": 9.402
+    },
+    "mean_wip": {
+      "mean": 5.557,
+      "pi_lo": 1.542,
+      "pi_hi": 10.214,
+      "gt": 5.913,
+      "bias_pct": -6.018,
+      "pi_covered": true
+    }
+  },
+  "waiting_by_class_s": {
+    "dm": {
+      "observed": 2.3,
+      "sim": 0.0
+    },
+    "hbw": {
+      "observed": 144.8,
+      "sim": 72.8
+    },
+    "hw": {
+      "observed": 2.9,
+      "sim": 2.0
+    },
+    "mm": {
+      "observed": 4.9,
+      "sim": 0.0
+    },
+    "ov": {
+      "observed": 5.0,
+      "sim": 7.4
+    },
+    "pm": {
+      "observed": 1.9,
+      "sim": 0.1
+    },
+    "sm": {
+      "observed": 2.3,
+      "sim": 0.1
+    },
+    "vgr": {
+      "observed": 23.0,
+      "sim": 56.6
+    },
+    "wt": {
+      "observed": 4.7,
+      "sim": 0.6
+    }
+  },
+  "idle_by_class_s": {
+    "dm": {
+      "observed": 1.0,
+      "sim": 0.0
+    },
+    "hbw": {
+      "observed": 18.4,
+      "sim": 11.3
+    },
+    "hw": {
+      "observed": 4.4,
+      "sim": 2.7
+    },
+    "mm": {
+      "observed": 11.3,
+      "sim": 0.0
+    },
+    "ov": {
+      "observed": 4.8,
+      "sim": 5.5
+    },
+    "pm": {
+      "observed": 0.7,
+      "sim": 0.0
+    },
+    "sm": {
+      "observed": 3.5,
+      "sim": 0.1
+    },
+    "vgr": {
+      "observed": 207.5,
+      "sim": 235.9
+    },
+    "wt": {
+      "observed": 21.1,
+      "sim": 3.9
+    }
+  },
+  "release_spacing_median_s": {
+    "observed": 3.2,
+    "sim": 31.9
+  },
+  "utilization": {
+    "dm_2": {
+      "observed": 0.03,
+      "sim": 0.036
+    },
+    "hbw_1": {
+      "observed": 0.195,
+      "sim": 0.226
+    },
+    "hbw_2": {
+      "observed": 0.465,
+      "sim": 0.537
+    },
+    "hw_1": {
+      "observed": 0.084,
+      "sim": 0.112
+    },
+    "mm_1": {
+      "observed": 0.069,
+      "sim": 0.076
+    },
+    "mm_2": {
+      "observed": 0.036,
+      "sim": 0.04
+    },
+    "ov_1": {
+      "observed": 0.219,
+      "sim": 0.28
+    },
+    "ov_2": {
+      "observed": 0.095,
+      "sim": 0.108
+    },
+    "pm_1": {
+      "observed": 0.054,
+      "sim": 0.062
+    },
+    "sm_1": {
+      "observed": 0.079,
+      "sim": 0.068
+    },
+    "sm_2": {
+      "observed": 0.029,
+      "sim": 0.05
+    },
+    "vgr_1": {
+      "observed": 0.524,
+      "sim": 0.638
+    },
+    "vgr_2": {
+      "observed": 0.289,
+      "sim": 0.334
+    },
+    "wt_1": {
+      "observed": 0.119,
+      "sim": 0.119
+    },
+    "wt_2": {
+      "observed": 0.069,
+      "sim": 0.076
+    }
+  },
+  "distances": {
+    "cycle_time_emd_s": 77.54,
+    "arrival_emd_s": 325.729,
+    "bigram_jsd": 0.03
+  },
+  "findings": [
+    "failure_rate: sim mean 0.0108 vs observed 0.0195 (bias -45%), observed value outside the 95% PI [0.00224, 0.0172]",
+    "overlapping_steps_per_case: sim mean 0.931 vs observed 1.57 (bias -41%), observed value outside the 95% PI [0.492, 1.5]",
+    "activity coverage 1.00: some observed activities are missing in some replications (rare branches)",
+    "mean waiting at vgr: sim 57 s vs observed 23 s",
+    "median case release spacing: sim 32 s vs observed 3 s",
+    "largest utilisation deviations (pp): vgr_1 11, hbw_2 7, ov_1 6"
+  ]
+}

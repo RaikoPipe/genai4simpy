@@ -1,0 +1,2565 @@
+"""SimPy model compiled from the simulation spec by src/genai4simpy_agent/compiler.py.
+
+Implements output contract v2. All parameters live in SPEC (generated, do not edit by hand).
+"""
+import json
+import random
+
+import numpy as np
+import pandas as pd
+import scipy.stats
+import simpy
+
+SPEC = json.loads(r"""{
+ "window": {
+  "t0": "2021-07-06T15:08:27.914751+00:00",
+  "horizon_s": 3183.202249,
+  "terminal_activity": "/hbw/store",
+  "first_activity": "/hbw/unload"
+ },
+ "resources": [
+  {
+   "name": "dm_2",
+   "resource_class": "dm",
+   "capacity": 1
+  },
+  {
+   "name": "hbw_1",
+   "resource_class": "hbw",
+   "capacity": 1
+  },
+  {
+   "name": "hbw_2",
+   "resource_class": "hbw",
+   "capacity": 1
+  },
+  {
+   "name": "hw_1",
+   "resource_class": "hw",
+   "capacity": 1
+  },
+  {
+   "name": "mm_1",
+   "resource_class": "mm",
+   "capacity": 1
+  },
+  {
+   "name": "mm_2",
+   "resource_class": "mm",
+   "capacity": 1
+  },
+  {
+   "name": "ov_1",
+   "resource_class": "ov",
+   "capacity": 1
+  },
+  {
+   "name": "ov_2",
+   "resource_class": "ov",
+   "capacity": 1
+  },
+  {
+   "name": "pm_1",
+   "resource_class": "pm",
+   "capacity": 1
+  },
+  {
+   "name": "sm_1",
+   "resource_class": "sm",
+   "capacity": 1
+  },
+  {
+   "name": "sm_2",
+   "resource_class": "sm",
+   "capacity": 1
+  },
+  {
+   "name": "vgr_1",
+   "resource_class": "vgr",
+   "capacity": 1
+  },
+  {
+   "name": "vgr_2",
+   "resource_class": "vgr",
+   "capacity": 1
+  },
+  {
+   "name": "wt_1",
+   "resource_class": "wt",
+   "capacity": 1
+  },
+  {
+   "name": "wt_2",
+   "resource_class": "wt",
+   "capacity": 1
+  }
+ ],
+ "variants": [
+  {
+   "name": "WF_101",
+   "probability": 0.1333,
+   "steps": [
+    {
+     "activity": "/hbw/unload",
+     "probability": 1.0,
+     "resources": {
+      "hbw_2": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "probability": 1.0,
+     "resources": {
+      "vgr_2": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/hbw/store_empty_bucket",
+     "probability": 1.0,
+     "resources": {
+      "hbw_2": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "probability": 1.0,
+     "resources": {
+      "vgr_1": 1.0
+     },
+     "concurrent_with_previous": true
+    },
+    {
+     "activity": "/ov/burn",
+     "probability": 1.0,
+     "resources": {
+      "ov_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/ov/temper",
+     "probability": 1.0,
+     "resources": {
+      "ov_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/mm/mill",
+     "probability": 1.0,
+     "resources": {
+      "mm_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/mm/deburr",
+     "probability": 1.0,
+     "resources": {
+      "mm_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/sm/sort",
+     "probability": 1.0,
+     "resources": {
+      "sm_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "probability": 1.0,
+     "resources": {
+      "vgr_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/hw/human_review",
+     "probability": 1.0,
+     "resources": {
+      "hw_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "probability": 1.0,
+     "resources": {
+      "vgr_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/hbw/get_empty_bucket",
+     "probability": 1.0,
+     "resources": {
+      "hbw_1": 1.0
+     },
+     "concurrent_with_previous": true
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "probability": 1.0,
+     "resources": {
+      "vgr_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/hbw/store",
+     "probability": 1.0,
+     "resources": {
+      "hbw_1": 1.0
+     },
+     "concurrent_with_previous": false
+    }
+   ],
+   "early_exit_probability": 0.0,
+   "early_exit_after_n_steps": {},
+   "early_exit_after": {}
+  },
+  {
+   "name": "WF_102",
+   "probability": 0.1333,
+   "steps": [
+    {
+     "activity": "/hbw/unload",
+     "probability": 1.0,
+     "resources": {
+      "hbw_2": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "probability": 1.0,
+     "resources": {
+      "vgr_2": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/wt/pick_up_and_transport",
+     "probability": 1.0,
+     "resources": {
+      "wt_2": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/mm/drill",
+     "probability": 1.0,
+     "resources": {
+      "mm_2": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/sm/transport",
+     "probability": 1.0,
+     "resources": {
+      "sm_2": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/dm/lower",
+     "probability": 1.0,
+     "resources": {
+      "dm_2": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/hbw/store_empty_bucket",
+     "probability": 1.0,
+     "resources": {
+      "hbw_2": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "probability": 1.0,
+     "resources": {
+      "vgr_1": 1.0
+     },
+     "concurrent_with_previous": true
+    },
+    {
+     "activity": "/hw/human_review",
+     "probability": 1.0,
+     "resources": {
+      "hw_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "probability": 1.0,
+     "resources": {
+      "vgr_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/hbw/get_empty_bucket",
+     "probability": 1.0,
+     "resources": {
+      "hbw_1": 1.0
+     },
+     "concurrent_with_previous": true
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "probability": 1.0,
+     "resources": {
+      "vgr_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/hbw/store",
+     "probability": 1.0,
+     "resources": {
+      "hbw_1": 1.0
+     },
+     "concurrent_with_previous": false
+    }
+   ],
+   "early_exit_probability": 0.0,
+   "early_exit_after_n_steps": {},
+   "early_exit_after": {}
+  },
+  {
+   "name": "WF_103",
+   "probability": 0.1333,
+   "steps": [
+    {
+     "activity": "/hbw/unload",
+     "probability": 1.0,
+     "resources": {
+      "hbw_2": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "probability": 1.0,
+     "resources": {
+      "vgr_2": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/hbw/store_empty_bucket",
+     "probability": 1.0,
+     "resources": {
+      "hbw_2": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "probability": 1.0,
+     "resources": {
+      "vgr_1": 1.0
+     },
+     "concurrent_with_previous": true
+    },
+    {
+     "activity": "/ov/burn",
+     "probability": 1.0,
+     "resources": {
+      "ov_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/ov/temper",
+     "probability": 1.0,
+     "resources": {
+      "ov_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/wt/pick_up_and_transport",
+     "probability": 1.0,
+     "resources": {
+      "wt_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/mm/mill",
+     "probability": 1.0,
+     "resources": {
+      "mm_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/mm/deburr",
+     "probability": 1.0,
+     "resources": {
+      "mm_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/sm/transport",
+     "probability": 1.0,
+     "resources": {
+      "sm_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/pm/punch_recesses",
+     "probability": 1.0,
+     "resources": {
+      "pm_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "probability": 1.0,
+     "resources": {
+      "vgr_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/hw/human_review",
+     "probability": 1.0,
+     "resources": {
+      "hw_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/hbw/get_empty_bucket",
+     "probability": 1.0,
+     "resources": {
+      "hbw_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "probability": 1.0,
+     "resources": {
+      "vgr_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/hbw/store",
+     "probability": 1.0,
+     "resources": {
+      "hbw_1": 1.0
+     },
+     "concurrent_with_previous": false
+    }
+   ],
+   "early_exit_probability": 0.0,
+   "early_exit_after_n_steps": {},
+   "early_exit_after": {}
+  },
+  {
+   "name": "WF_104",
+   "probability": 0.0667,
+   "steps": [
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "probability": 1.0,
+     "resources": {
+      "vgr_2": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/hbw/store_empty_bucket",
+     "probability": 1.0,
+     "resources": {
+      "hbw_2": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/ov/burn",
+     "probability": 1.0,
+     "resources": {
+      "ov_2": 1.0
+     },
+     "concurrent_with_previous": true
+    },
+    {
+     "activity": "/wt/pick_up_and_transport",
+     "probability": 1.0,
+     "resources": {
+      "wt_2": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/mm/mill",
+     "probability": 1.0,
+     "resources": {
+      "mm_2": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/sm/sort",
+     "probability": 1.0,
+     "resources": {
+      "sm_2": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "probability": 1.0,
+     "resources": {
+      "vgr_2": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "probability": 1.0,
+     "resources": {
+      "vgr_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/wt/pick_up_and_transport",
+     "probability": 1.0,
+     "resources": {
+      "wt_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/mm/deburr",
+     "probability": 1.0,
+     "resources": {
+      "mm_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/sm/transport",
+     "probability": 1.0,
+     "resources": {
+      "sm_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/pm/punch_gill",
+     "probability": 1.0,
+     "resources": {
+      "pm_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "probability": 1.0,
+     "resources": {
+      "vgr_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/hw/human_review",
+     "probability": 1.0,
+     "resources": {
+      "hw_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/hbw/get_empty_bucket",
+     "probability": 1.0,
+     "resources": {
+      "hbw_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "probability": 1.0,
+     "resources": {
+      "vgr_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/hbw/store",
+     "probability": 1.0,
+     "resources": {
+      "hbw_1": 1.0
+     },
+     "concurrent_with_previous": false
+    }
+   ],
+   "early_exit_probability": 0.0,
+   "early_exit_after_n_steps": {},
+   "early_exit_after": {}
+  },
+  {
+   "name": "WF_105",
+   "probability": 0.1333,
+   "steps": [
+    {
+     "activity": "/hbw/unload",
+     "probability": 1.0,
+     "resources": {
+      "hbw_2": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "probability": 1.0,
+     "resources": {
+      "vgr_2": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/hbw/store_empty_bucket",
+     "probability": 1.0,
+     "resources": {
+      "hbw_2": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "probability": 1.0,
+     "resources": {
+      "vgr_1": 1.0
+     },
+     "concurrent_with_previous": true
+    },
+    {
+     "activity": "/ov/burn",
+     "probability": 1.0,
+     "resources": {
+      "ov_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/wt/pick_up_and_transport",
+     "probability": 1.0,
+     "resources": {
+      "wt_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/mm/deburr",
+     "probability": 1.0,
+     "resources": {
+      "mm_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/sm/sort",
+     "probability": 1.0,
+     "resources": {
+      "sm_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "probability": 1.0,
+     "resources": {
+      "vgr_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/hw/human_review",
+     "probability": 1.0,
+     "resources": {
+      "hw_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/hbw/get_empty_bucket",
+     "probability": 1.0,
+     "resources": {
+      "hbw_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "probability": 1.0,
+     "resources": {
+      "vgr_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/hbw/store",
+     "probability": 1.0,
+     "resources": {
+      "hbw_1": 1.0
+     },
+     "concurrent_with_previous": false
+    }
+   ],
+   "early_exit_probability": 0.0,
+   "early_exit_after_n_steps": {},
+   "early_exit_after": {}
+  },
+  {
+   "name": "WF_108",
+   "probability": 0.0667,
+   "steps": [
+    {
+     "activity": "/hbw/unload",
+     "probability": 1.0,
+     "resources": {
+      "hbw_2": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "probability": 1.0,
+     "resources": {
+      "vgr_2": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/hbw/store_empty_bucket",
+     "probability": 1.0,
+     "resources": {
+      "hbw_2": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/ov/burn",
+     "probability": 1.0,
+     "resources": {
+      "ov_2": 1.0
+     },
+     "concurrent_with_previous": true
+    },
+    {
+     "activity": "/wt/pick_up_and_transport",
+     "probability": 1.0,
+     "resources": {
+      "wt_2": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/mm/drill",
+     "probability": 1.0,
+     "resources": {
+      "mm_2": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/mm/deburr",
+     "probability": 1.0,
+     "resources": {
+      "mm_2": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/sm/sort",
+     "probability": 1.0,
+     "resources": {
+      "sm_2": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "probability": 1.0,
+     "resources": {
+      "vgr_2": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "probability": 1.0,
+     "resources": {
+      "vgr_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/hw/human_review",
+     "probability": 1.0,
+     "resources": {
+      "hw_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "probability": 1.0,
+     "resources": {
+      "vgr_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/hbw/get_empty_bucket",
+     "probability": 1.0,
+     "resources": {
+      "hbw_1": 1.0
+     },
+     "concurrent_with_previous": true
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "probability": 1.0,
+     "resources": {
+      "vgr_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/hbw/store",
+     "probability": 1.0,
+     "resources": {
+      "hbw_1": 1.0
+     },
+     "concurrent_with_previous": false
+    }
+   ],
+   "early_exit_probability": 0.0,
+   "early_exit_after_n_steps": {},
+   "early_exit_after": {}
+  },
+  {
+   "name": "WF_109",
+   "probability": 0.0667,
+   "steps": [
+    {
+     "activity": "/hbw/unload",
+     "probability": 1.0,
+     "resources": {
+      "hbw_2": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "probability": 1.0,
+     "resources": {
+      "vgr_2": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/hbw/store_empty_bucket",
+     "probability": 1.0,
+     "resources": {
+      "hbw_2": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "probability": 1.0,
+     "resources": {
+      "vgr_1": 1.0
+     },
+     "concurrent_with_previous": true
+    },
+    {
+     "activity": "/ov/burn",
+     "probability": 1.0,
+     "resources": {
+      "ov_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/ov/temper",
+     "probability": 1.0,
+     "resources": {
+      "ov_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/wt/pick_up_and_transport",
+     "probability": 1.0,
+     "resources": {
+      "wt_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/mm/mill",
+     "probability": 1.0,
+     "resources": {
+      "mm_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/mm/deburr",
+     "probability": 1.0,
+     "resources": {
+      "mm_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/sm/transport",
+     "probability": 1.0,
+     "resources": {
+      "sm_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/pm/punch_ribbing",
+     "probability": 1.0,
+     "resources": {
+      "pm_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "probability": 1.0,
+     "resources": {
+      "vgr_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/hw/human_review",
+     "probability": 1.0,
+     "resources": {
+      "hw_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/hbw/get_empty_bucket",
+     "probability": 1.0,
+     "resources": {
+      "hbw_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "probability": 1.0,
+     "resources": {
+      "vgr_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/hbw/store",
+     "probability": 1.0,
+     "resources": {
+      "hbw_1": 1.0
+     },
+     "concurrent_with_previous": false
+    }
+   ],
+   "early_exit_probability": 0.0,
+   "early_exit_after_n_steps": {},
+   "early_exit_after": {}
+  },
+  {
+   "name": "WF_1106",
+   "probability": 0.1333,
+   "steps": [
+    {
+     "activity": "/hbw/unload",
+     "probability": 1.0,
+     "resources": {
+      "hbw_2": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "probability": 1.0,
+     "resources": {
+      "vgr_2": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/ov/burn",
+     "probability": 1.0,
+     "resources": {
+      "ov_2": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/wt/pick_up_and_transport",
+     "probability": 1.0,
+     "resources": {
+      "wt_2": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/hbw/get_empty_bucket",
+     "probability": 1.0,
+     "resources": {
+      "hbw_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/mm/transport_from_to",
+     "probability": 1.0,
+     "resources": {
+      "mm_2": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/sm/transport",
+     "probability": 1.0,
+     "resources": {
+      "sm_2": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/dm/cylindrical_drill",
+     "probability": 1.0,
+     "resources": {
+      "dm_2": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "probability": 1.0,
+     "resources": {
+      "vgr_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/hw/human_review",
+     "probability": 1.0,
+     "resources": {
+      "hw_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "probability": 1.0,
+     "resources": {
+      "vgr_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/hbw/get_empty_bucket",
+     "probability": 1.0,
+     "resources": {
+      "hbw_1": 1.0
+     },
+     "concurrent_with_previous": true
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "probability": 1.0,
+     "resources": {
+      "vgr_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/hbw/store",
+     "probability": 1.0,
+     "resources": {
+      "hbw_1": 1.0
+     },
+     "concurrent_with_previous": false
+    }
+   ],
+   "early_exit_probability": 0.0,
+   "early_exit_after_n_steps": {},
+   "early_exit_after": {}
+  },
+  {
+   "name": "WF_1107",
+   "probability": 0.1333,
+   "steps": [
+    {
+     "activity": "/hbw/unload",
+     "probability": 1.0,
+     "resources": {
+      "hbw_2": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "probability": 1.0,
+     "resources": {
+      "vgr_2": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/hbw/store_empty_bucket",
+     "probability": 1.0,
+     "resources": {
+      "hbw_2": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "probability": 1.0,
+     "resources": {
+      "vgr_1": 1.0
+     },
+     "concurrent_with_previous": true
+    },
+    {
+     "activity": "/ov/burn",
+     "probability": 1.0,
+     "resources": {
+      "ov_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/wt/pick_up_and_transport",
+     "probability": 1.0,
+     "resources": {
+      "wt_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/mm/drill",
+     "probability": 1.0,
+     "resources": {
+      "mm_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/sm/transport",
+     "probability": 1.0,
+     "resources": {
+      "sm_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/pm/punch_ribbing",
+     "probability": 1.0,
+     "resources": {
+      "pm_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "probability": 1.0,
+     "resources": {
+      "vgr_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/hw/human_review",
+     "probability": 1.0,
+     "resources": {
+      "hw_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "probability": 1.0,
+     "resources": {
+      "vgr_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/hbw/get_empty_bucket",
+     "probability": 1.0,
+     "resources": {
+      "hbw_1": 1.0
+     },
+     "concurrent_with_previous": true
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "probability": 1.0,
+     "resources": {
+      "vgr_1": 1.0
+     },
+     "concurrent_with_previous": false
+    },
+    {
+     "activity": "/hbw/store",
+     "probability": 1.0,
+     "resources": {
+      "hbw_1": 1.0
+     },
+     "concurrent_with_previous": false
+    }
+   ],
+   "early_exit_probability": 0.0,
+   "early_exit_after_n_steps": {},
+   "early_exit_after": {}
+  }
+ ],
+ "control_policies": {
+  "queue_discipline": {
+   "hbw": "priority",
+   "vgr": "fifo"
+  },
+  "priority_order": {
+   "hbw": [
+    "/hbw/store",
+    "/hbw/store_empty_bucket",
+    "/hbw/get_empty_bucket",
+    "/hbw/unload"
+   ]
+  },
+  "release_rule": "open (bursty releases)",
+  "intra_case_concurrency": "/hbw/store_empty_bucket || /ov/burn; /hbw/store_empty_bucket || /vgr/pick_up_and_transport; /vgr/pick_up_and_transport || /hbw/get_empty_bucket",
+  "evidence": {
+   "hbw_fifo_agreement": 0.559,
+   "vgr_fifo_agreement": 1.0,
+   "hbw_best_rule": "activity_priority",
+   "vgr_best_rule": "FIFO",
+   "overlapping_steps_per_completed_case": null
+  }
+ },
+ "initial_state": {
+  "wip_at_start": 0,
+  "cases_in_progress": []
+ },
+ "assumptions": [
+  "Window is short (~53 min, 3183 s): only 3 of 18 cases complete (WF_101_30, WF_102_31, WF_1106_22); 3 cases are right-censored at the window end (WF_104_21, WF_108_18, WF_109_16) and 12 stop inside the window without the terminal activity. All 15 non-censored cases are treated as window-truncated, not scrap/abandonment, because 418/401 failures are retryable and the workpiece continues.",
+  "No true early exits are modelled: early_exit_probability = 0 for all variants. The 'early exits' reported by discover_variant_routings for variants without a complete case (WF_103, WF_104, WF_105, WF_108, WF_109, WF_1107) are artifacts of window truncation and were corrected by completing those routings with the standard terminal tail.",
+  "Standard terminal tail (verified identical on all 3 complete cases, after /hw/human_review): /vgr/pick_up_and_transport @ vgr_1 -> /hbw/get_empty_bucket @ hbw_1 (concurrent_with_previous) -> /vgr/pick_up_and_transport @ vgr_1 -> /hbw/store @ hbw_1. Applied to the 6 window-truncated variants WF_103, WF_104, WF_105, WF_108, WF_109, WF_1107.",
+  "Failure/retry semantics: 418 (precondition) and 401 (auth) events are retryable. One event_id = one attempt; a complete row is terminal for that attempt; a retry is a new event_id repeating the same activity on the same resource. The operation retries and eventually succeeds, and the workpiece continues along its routing. No permanent scrap is modelled.",
+  "Variant mix probabilities (0.1333 x6, 0.0667 x3) are the share of released cases over all 18 cases (detect_censoring variant_mix.all_cases), used because the complete-case mix (3 cases) is too thin to be representative.",
+  "hbw queue discipline is activity priority (simpy.PriorityResource) with order /hbw/store > /hbw/store_empty_bucket > /hbw/get_empty_bucket > /hbw/unload (learned rule 97.1% vs FIFO 55.9% over 34 mixed-activity decision points). vgr queue is FIFO (100% agreement over 10 decision points).",
+  "Release control is open with bursty arrivals (no WIP cap, no completion trigger): 7 bursts of mean size 2.57 (max 8), burst IAT mean 1.59 s, gap IAT mean 377.5 s; max WIP 12, time-avg WIP 7.09.",
+  "Intra-case concurrency is modelled for the pairs with material overlap: /hbw/store_empty_bucket || /ov/burn (4 cases, mean overlap 38.7 s), /hbw/store_empty_bucket || /vgr/pick_up_and_transport (3 cases, 35.1 s), /vgr/pick_up_and_transport || /hbw/get_empty_bucket (2 cases, 26.5 s). Physically: the bucket store / next transport is requested while the previous step still holds its resource.",
+  "Initial WIP at window start is 0 (no left-censored cases); the simulation starts empty.",
+  "All resources have capacity 1; each concrete resource (hbw_1/hbw_2, vgr_1/vgr_2, ov_1/ov_2, mm_1/mm_2, sm_1/sm_2, wt_1/wt_2) is a separate single-server queue.",
+  "WF_104 starts at /vgr/pick_up_and_transport (no /hbw/unload) because its first observed step in the window is a vgr_2 transport; the unload of that case predates the window (WF_104_20 has missing_first_activity).",
+  "64% of all waiting time is 'extraneous' (resource idle while the case waits, dominated by hbw: 64.3% of 46 hbw waits, mean 289 s) \u2014 hand-off / transport / release delays, not machine contention; vgr contention is 45.6% of vgr waits.",
+  "workpiece_size for /ov/burn mixes categorical labels (regular/middle/large/maxi) and numeric sizes (30-60); kept as raw string, no size-class mapping applied in this phase.",
+  "Quantity (workpiece count) is present in 33/576 rows = 11 activity instances x 3 lifecycle rows (identical value on scheduled/start/complete per instance). Only 10 of 18 cases carry it, and only on material-removal steps: /mm/drill (4 instances), /pm/punch_recesses (2), /pm/punch_gill (1), /pm/punch_ribbing (2), /dm/cylindrical_drill (2).",
+  "Quantity is effectively deterministic per variant/step: WF_102->6, WF_103->6, WF_104->8, WF_108->4, WF_109->6, WF_1106->4, WF_1107->6 (/mm/drill) and 10 (/pm/punch_ribbing). Recommended model: deterministic per-variant step attribute; fallback discrete fit over observed support {4,6,8,10} with empirical PMF {4:0.273, 6:0.545, 8:0.091, 10:0.091} (n=33; flagged sparse, n<5 per variant). Discrete uniform over {4,6,8,10} rejected (chi2=18.27, df=3, p~0.0005; value 6 dominates with 18/33).",
+  "Quality extraction skipped: no scrap/rework/quality columns exist in the log; all 8 failures (418 x7, 401 x1) are retryable with eventual success, so there is no quality yield to extract and no scrap/rework is modelled.",
+  "The 4 incomplete cases (WF_104_21, WF_108_18, WF_109_16, WF_1107_17) were retained for quantity extraction per the binding rule; none of their observed activities carry the quantity parameter, so they contribute 0 observations.",
+  "Extraction plan stated quantity values 3-10, but the observed range is 4-10 (no value 3 present); the observed range 4-10 is used.",
+  "Service times are extracted from start lifecycle rows only: actual_duration = operation_end_time - time:timestamp (start row); complete_service_time (includes queueing) is never used. 192 instances -> 184 service-time samples after excluding the 8 failed attempts (418 x7, 401 x1), which are short precondition/auth failures, not full service; they are retained only for per-activity failure-rate estimation.",
+  "Grouping: per activity, pooling only same-class machine pairs performing the SAME activity (ov_1+ov_2, mm_1+mm_2, sm_1+sm_2, wt_1+wt_2); never pooled across activities. hbw activities are resource-exclusive per activity (hbw_2: unload/store_empty_bucket; hbw_1: get_empty_bucket/store) so no cross-resource pooling applies.",
+  "VGR transports: one distribution per VGR resource (vgr_1: norm(42.64, 15.56) n=32; vgr_2: empirical quantiles 35.7-45.3 s n=18); the pooled 50-sample fit is kept as the primary duration. Flagged for revisit at the modeling stage: vgr_2 serves early transports, vgr_1 the back half + terminal tail, so distance profiles may differ.",
+  "/ov/burn: duration rises monotonically with categorical size class (regular 21.4-26.6 s n=5, middle 26.9-31.8 s n=2, large 31.6-36.7 s n=3, maxi 36.9-41.8 s n=3) but is not (near-)constant within a class (within-class spread ~5 s) and per-class n=2-3 is too sparse for per-class fits; the pooled empirical-quantile fit is used, with the per-class means (23.55/29.37/33.30/38.50 s) as reference for size conditioning at the modeling stage. planned_operation_time 222 s is a nominal cycle, not a service-time reference.",
+  "Drill steps: numeric workpiece_size (30-60) is not significantly correlated with duration at n=4 (/mm/drill r=0.656; /dm/cylindrical_drill n=2 untestable), so samples are pooled; however quantity is strongly associated with /mm/drill duration (r=0.93: qty 4 -> 5.3 s, qty 6 -> 15.5-20.9 s) and is flagged for quantity conditioning at the modeling stage.",
+  "Per-activity failure rates (418+401 unified retry mechanism, failed attempts / total attempts): /hbw/store_empty_bucket 2/15=0.1333, /vgr/pick_up_and_transport 5/55=0.0909 (all 5 on vgr_1: 5/37=0.1351; vgr_2 0/18), /hbw/unload 1/17=0.0588; all other 17 activities 0 (small-sample flag).",
+  "The 4 incomplete cases (WF_104_21, WF_108_18, WF_109_16, WF_1107_17) are retained for duration extraction: their observed steps are complete service observations (WF_104_21 contributes 4, WF_109_16 contributes 1, WF_1107_17 contributes 2, WF_108_18 contributes 0 ok attempts - its only in-window attempt is the failed 401 unload).",
+  "Sparse samples (n<5: /dm/lower, /dm/cylindrical_drill, /mm/transport_from_to, /mm/drill, /pm/punch_gill, /pm/punch_recesses, /pm/punch_ribbing, /hbw/store, /ov/temper) are fitted with the bounded empirical fallback (triangular/constant) and flagged for the modeling stage; planned_operation_time values are recorded as reference only (actuals supersede).",
+  "Outliers kept (real variability, no data defect): /sm/sort 245.7 s (WF_108_17; genuine start->end span, planned 11 s) skews the pooled fit (median 12.1 s) - flagged for a cap or slow-sort mode at the modeling stage; /mm/mill single mm_2 instance 14.44 s (end_position sm_2_lb_1_pos, suggests combined mill+transport); /hw/human_review 0.4-62.3 s (human approval variability, CV 1.37). No values were removed.",
+  "wt transports are pooled across wt_1/wt_2 per the plan (per-resource rule was specified for VGR only), but the resources clearly differ (wt_1 25.9-26.4 s, wt_2 28.9-29.2 s, no overlap; per-resource fits recorded in resource_durations) - flagged for per-resource conditioning at the modeling stage. Same for /sm/transport (sm_1 18.3-21.6 s vs sm_2 14.4-14.7 s)."
+ ],
+ "activities": [
+  {
+   "name": "/dm/cylindrical_drill",
+   "eligible_resources": [
+    "dm_2"
+   ],
+   "duration": {
+    "family": "triang",
+    "params": {
+     "c": 0.5,
+     "loc": 21.969,
+     "scale": 4.046
+    },
+    "mean": 23.992,
+    "n": 2,
+    "source": "fit_activity_durations"
+   },
+   "failure_probability": 0.0,
+   "on_failure": "retry",
+   "notes": "Sparse (n=2, sizes 50/60 -> 22.0/26.0 s); size dependence untestable. Planned 47 s (reference only). Flagged for modeling stage."
+  },
+  {
+   "name": "/dm/lower",
+   "eligible_resources": [
+    "dm_2"
+   ],
+   "duration": {
+    "family": "triang",
+    "params": {
+     "c": 0.5,
+     "loc": 13.875,
+     "scale": 0.266
+    },
+    "mean": 14.008,
+    "n": 2,
+    "source": "fit_activity_durations"
+   },
+   "failure_probability": 0.0,
+   "on_failure": "retry",
+   "notes": "Sparse (n=2); near-constant (CV 0.013). Planned 14 s (reference only). Flagged for modeling stage."
+  },
+  {
+   "name": "/hbw/get_empty_bucket",
+   "eligible_resources": [
+    "hbw_1"
+   ],
+   "duration": {
+    "family": "empirical_quantiles",
+    "params": {},
+    "quantiles": [
+     30.797,
+     31.1795,
+     31.562,
+     33.2655,
+     34.969,
+     35.3985,
+     35.828,
+     35.9115,
+     35.995,
+     36.107,
+     36.219,
+     36.3285,
+     36.438,
+     36.6095,
+     36.781,
+     36.8275,
+     36.874,
+     40.249,
+     43.624,
+     46.109,
+     48.594
+    ],
+    "quantile_probs": [
+     0.0,
+     0.05,
+     0.1,
+     0.15,
+     0.2,
+     0.25,
+     0.3,
+     0.35,
+     0.4,
+     0.45,
+     0.5,
+     0.55,
+     0.6,
+     0.65,
+     0.7,
+     0.75,
+     0.8,
+     0.85,
+     0.9,
+     0.95,
+     1.0
+    ],
+    "mean": 37.0619,
+    "n": 11,
+    "source": "fit_activity_durations"
+   },
+   "failure_probability": 0.0,
+   "on_failure": "retry",
+   "notes": "Served exclusively by hbw_1 in observed routings; no cross-resource pooling needed."
+  },
+  {
+   "name": "/hbw/store",
+   "eligible_resources": [
+    "hbw_1"
+   ],
+   "duration": {
+    "family": "triang",
+    "params": {
+     "c": 0.30222,
+     "loc": 34.641,
+     "scale": 7.703
+    },
+    "mean": 37.9847,
+    "n": 3,
+    "source": "fit_activity_durations"
+   },
+   "failure_probability": 0.0,
+   "on_failure": "retry",
+   "notes": "Sparse (n=3; terminal activity, only in the 3 complete cases). Planned 46 s (reference only). Flagged for modeling stage."
+  },
+  {
+   "name": "/hbw/store_empty_bucket",
+   "eligible_resources": [
+    "hbw_2"
+   ],
+   "duration": {
+    "family": "empirical_quantiles",
+    "params": {},
+    "quantiles": [
+     32.641,
+     33.7936,
+     34.9214,
+     35.9996,
+     36.4718,
+     36.641,
+     36.7658,
+     37.1636,
+     38.1074,
+     39.3156,
+     40.656,
+     40.7124,
+     40.7844,
+     40.8876,
+     41.572,
+     42.547,
+     42.556,
+     43.009,
+     44.35,
+     44.825,
+     44.867
+    ],
+    "quantile_probs": [
+     0.0,
+     0.05,
+     0.1,
+     0.15,
+     0.2,
+     0.25,
+     0.3,
+     0.35,
+     0.4,
+     0.45,
+     0.5,
+     0.55,
+     0.6,
+     0.65,
+     0.7,
+     0.75,
+     0.8,
+     0.85,
+     0.9,
+     0.95,
+     1.0
+    ],
+    "mean": 39.4288,
+    "n": 13,
+    "source": "fit_activity_durations"
+   },
+   "failure_probability": 0.1333,
+   "on_failure": "retry",
+   "notes": "Served exclusively by hbw_2. Failure rate 2/15 (both 418 precondition: resource not ready)."
+  },
+  {
+   "name": "/hbw/unload",
+   "eligible_resources": [
+    "hbw_2"
+   ],
+   "duration": {
+    "family": "empirical_quantiles",
+    "params": {},
+    "quantiles": [
+     32.735,
+     32.8865,
+     33.078,
+     33.676,
+     35.047,
+     35.96125,
+     36.3705,
+     36.48125,
+     36.5,
+     37.88975,
+     38.4265,
+     38.51175,
+     38.547,
+     38.664,
+     39.0705,
+     40.69575,
+     44.469,
+     45.60525,
+     47.6165,
+     49.99875,
+     52.248
+    ],
+    "quantile_probs": [
+     0.0,
+     0.05,
+     0.1,
+     0.15,
+     0.2,
+     0.25,
+     0.3,
+     0.35,
+     0.4,
+     0.45,
+     0.5,
+     0.55,
+     0.6,
+     0.65,
+     0.7,
+     0.75,
+     0.8,
+     0.85,
+     0.9,
+     0.95,
+     1.0
+    ],
+    "mean": 39.2919,
+    "n": 16,
+    "source": "fit_activity_durations"
+   },
+   "failure_probability": 0.0588,
+   "on_failure": "retry",
+   "notes": "Served exclusively by hbw_2. Failure rate 1/17 (401 auth: business_key not in warehouse, WF_108_18)."
+  },
+  {
+   "name": "/hw/human_review",
+   "eligible_resources": [
+    "hw_1"
+   ],
+   "duration": {
+    "family": "empirical_quantiles",
+    "params": {},
+    "quantiles": [
+     0.438,
+     1.2297,
+     1.6596,
+     1.6674,
+     1.7832,
+     1.86775,
+     1.8879,
+     2.0538,
+     2.4278,
+     3.2104,
+     3.75,
+     5.0822,
+     9.2994,
+     11.75575,
+     13.6515,
+     16.76825,
+     21.5766,
+     28.02975,
+     41.5335,
+     52.8354,
+     62.25
+    ],
+    "quantile_probs": [
+     0.0,
+     0.05,
+     0.1,
+     0.15,
+     0.2,
+     0.25,
+     0.3,
+     0.35,
+     0.4,
+     0.45,
+     0.5,
+     0.55,
+     0.6,
+     0.65,
+     0.7,
+     0.75,
+     0.8,
+     0.85,
+     0.9,
+     0.95,
+     1.0
+    ],
+    "mean": 13.9959,
+    "n": 14,
+    "source": "fit_activity_durations"
+   },
+   "failure_probability": 0.0,
+   "on_failure": "retry",
+   "notes": "Highly variable human approval (0.4-62.3 s, CV 1.37; planned 102 s, reference only). Flagged for modeling stage."
+  },
+  {
+   "name": "/mm/deburr",
+   "eligible_resources": [
+    "mm_1",
+    "mm_2"
+   ],
+   "duration": {
+    "family": "triang",
+    "params": {
+     "c": 0.35964,
+     "loc": 14.046,
+     "scale": 1.001
+    },
+    "mean": 14.499667,
+    "n": 9,
+    "source": "fit_activity_durations"
+   },
+   "failure_probability": 0.0,
+   "on_failure": "retry",
+   "notes": "Pooled mm_1 (n=8) + mm_2 (n=1); resources do not differ (14.05-15.05 s vs 14.24 s)."
+  },
+  {
+   "name": "/mm/drill",
+   "eligible_resources": [
+    "mm_1",
+    "mm_2"
+   ],
+   "duration": {
+    "family": "triang",
+    "params": {
+     "c": 0.672512,
+     "loc": 5.281,
+     "scale": 15.625
+    },
+    "mean": 13.992,
+    "n": 4,
+    "source": "fit_activity_durations"
+   },
+   "failure_probability": 0.0,
+   "on_failure": "retry",
+   "notes": "Sparse (n=4). Numeric workpiece_size (30/40) not significantly correlated with duration (r=0.656, n=4) -> pooled; quantity strongly associated (r=0.93: qty 4 -> 5.3 s, qty 6 -> 15.5-20.9 s) -> flagged for quantity conditioning at modeling stage."
+  },
+  {
+   "name": "/mm/mill",
+   "eligible_resources": [
+    "mm_1",
+    "mm_2"
+   ],
+   "duration": {
+    "family": "triang",
+    "params": {
+     "c": 0.005911,
+     "loc": 5.047,
+     "scale": 9.39
+    },
+    "mean": 8.1955,
+    "n": 6,
+    "source": "fit_activity_durations"
+   },
+   "failure_probability": 0.0,
+   "on_failure": "retry",
+   "notes": "5 mm_1 instances 5.0-5.3 s (end mm_1_initial_pos); single mm_2 instance (WF_104_20) 14.44 s with end_position sm_2_lb_1_pos, suggesting combined mill+transport. Kept (no data defect); flagged for modeling stage."
+  },
+  {
+   "name": "/mm/transport_from_to",
+   "eligible_resources": [
+    "mm_2"
+   ],
+   "duration": {
+    "family": "triang",
+    "params": {
+     "c": 0.5,
+     "loc": 12.594,
+     "scale": 0.547
+    },
+    "mean": 12.8675,
+    "n": 2,
+    "source": "fit_activity_durations"
+   },
+   "failure_probability": 0.0,
+   "on_failure": "retry",
+   "notes": "Sparse (n=2, WF_1106 only). Planned 12 s (reference only). Flagged for modeling stage."
+  },
+  {
+   "name": "/ov/burn",
+   "eligible_resources": [
+    "ov_1",
+    "ov_2"
+   ],
+   "duration": {
+    "family": "empirical_quantiles",
+    "params": {},
+    "quantiles": [
+     21.422,
+     21.5528,
+     21.6402,
+     21.6408,
+     23.5722,
+     26.469,
+     26.5254,
+     26.6292,
+     26.8278,
+     28.7612,
+     31.562,
+     31.6268,
+     31.7048,
+     31.8092,
+     33.7752,
+     36.672,
+     36.7842,
+     36.8592,
+     36.8598,
+     38.8288,
+     41.782
+    ],
+    "quantile_probs": [
+     0.0,
+     0.05,
+     0.1,
+     0.15,
+     0.2,
+     0.25,
+     0.3,
+     0.35,
+     0.4,
+     0.45,
+     0.5,
+     0.55,
+     0.6,
+     0.65,
+     0.7,
+     0.75,
+     0.8,
+     0.85,
+     0.9,
+     0.95,
+     1.0
+    ],
+    "mean": 30.1445,
+    "n": 13,
+    "source": "fit_activity_durations"
+   },
+   "failure_probability": 0.0,
+   "on_failure": "retry",
+   "notes": "Duration rises monotonically with categorical size class but is not (near-)constant within class (within-class spread ~5 s): regular 21.4-26.6 s (n=5, mean 23.55), middle 26.9-31.8 s (n=2, mean 29.37), large 31.6-36.7 s (n=3, mean 33.30), maxi 36.9-41.8 s (n=3, mean 38.50). n=2-3 per class too sparse for per-class fits -> pooled empirical quantiles; per-class means are the reference for size conditioning at modeling stage. Planned 222 s is a nominal cycle, not a service-time reference."
+  },
+  {
+   "name": "/ov/temper",
+   "eligible_resources": [
+    "ov_1",
+    "ov_2"
+   ],
+   "duration": {
+    "family": "triang",
+    "params": {
+     "c": 0.592357,
+     "loc": 51.453,
+     "scale": 0.157
+    },
+    "mean": 51.536333,
+    "n": 5,
+    "source": "fit_activity_durations"
+   },
+   "failure_probability": 0.0,
+   "on_failure": "retry",
+   "notes": "Near-constant (51.45-51.61 s, CV 0.001); all 5 observed on ov_1 (ov_2 eligible per same-class pooling rule). Planned 56 s (reference only)."
+  },
+  {
+   "name": "/pm/punch_gill",
+   "eligible_resources": [
+    "pm_1"
+   ],
+   "duration": {
+    "family": "constant",
+    "params": {
+     "value": 27.484
+    },
+    "mean": 27.484,
+    "n": 1,
+    "source": "fit_activity_durations"
+   },
+   "failure_probability": 0.0,
+   "on_failure": "retry",
+   "notes": "Sparse (n=1, WF_104_20). Planned 35 s (reference only). Flagged for modeling stage."
+  },
+  {
+   "name": "/pm/punch_recesses",
+   "eligible_resources": [
+    "pm_1"
+   ],
+   "duration": {
+    "family": "triang",
+    "params": {
+     "c": 0.5,
+     "loc": 23.453,
+     "scale": 0.375
+    },
+    "mean": 23.6405,
+    "n": 2,
+    "source": "fit_activity_durations"
+   },
+   "failure_probability": 0.0,
+   "on_failure": "retry",
+   "notes": "Sparse (n=2, WF_103). Planned 39 s (reference only). Flagged for modeling stage."
+  },
+  {
+   "name": "/pm/punch_ribbing",
+   "eligible_resources": [
+    "pm_1"
+   ],
+   "duration": {
+    "family": "triang",
+    "params": {
+     "c": 0.5,
+     "loc": 23.562,
+     "scale": 7.657
+    },
+    "mean": 27.3905,
+    "n": 2,
+    "source": "fit_activity_durations"
+   },
+   "failure_probability": 0.0,
+   "on_failure": "retry",
+   "notes": "Sparse (n=2: WF_109 qty 10 -> 31.22 s, WF_1107 qty 6 -> 23.56 s). Planned 39 s (reference only). Flagged for modeling stage."
+  },
+  {
+   "name": "/sm/sort",
+   "eligible_resources": [
+    "sm_1",
+    "sm_2"
+   ],
+   "duration": {
+    "family": "triang",
+    "params": {
+     "c": 0.015929,
+     "loc": 8.36,
+     "scale": 237.34
+    },
+    "mean": 88.7335,
+    "n": 6,
+    "source": "fit_activity_durations"
+   },
+   "failure_probability": 0.0,
+   "on_failure": "retry",
+   "notes": "One 245.7 s observation (WF_108_17, planned 11 s) is a genuine start->end service span, kept (no data defect); it skews the pooled fit (median 12.1 s). Other 5: 8.4-14.0 s. Flagged for modeling stage (cap or separate slow-sort mode)."
+  },
+  {
+   "name": "/sm/transport",
+   "eligible_resources": [
+    "sm_1",
+    "sm_2"
+   ],
+   "duration": {
+    "family": "triang",
+    "params": {
+     "c": 0.537006,
+     "loc": 14.39,
+     "scale": 7.188
+    },
+    "mean": 18.072667,
+    "n": 9,
+    "source": "fit_activity_durations"
+   },
+   "failure_probability": 0.0,
+   "on_failure": "retry",
+   "resource_durations": {
+    "sm_1": {
+     "family": "triang",
+     "params": {
+      "c": 0.34976,
+      "loc": 18.25,
+      "scale": 3.328
+     },
+     "mean": 19.747333,
+     "n": 5,
+     "source": "fit_activity_durations"
+    },
+    "sm_2": {
+     "family": "triang",
+     "params": {
+      "c": 0.56015,
+      "loc": 14.39,
+      "scale": 0.266
+     },
+     "mean": 14.528333,
+     "n": 4,
+     "source": "fit_activity_durations"
+    }
+   },
+   "notes": "Resources clearly differ (no overlap): sm_1 18.3-21.6 s (planned 18 s), sm_2 14.4-14.7 s (planned 15 s). Pooled fit kept as primary per plan; per-resource values in resource_durations; recommend per-resource conditioning at modeling stage."
+  },
+  {
+   "name": "/vgr/pick_up_and_transport",
+   "eligible_resources": [
+    "vgr_1",
+    "vgr_2"
+   ],
+   "duration": {
+    "family": "empirical_quantiles",
+    "params": {},
+    "quantiles": [
+     13.109,
+     19.69005,
+     24.3436,
+     35.9146,
+     36.4466,
+     36.69925,
+     37.1669,
+     38.23905,
+     40.6844,
+     42.0459,
+     42.7875,
+     43.28035,
+     43.5968,
+     43.9038,
+     44.2546,
+     46.1175,
+     48.8516,
+     51.1126,
+     53.1308,
+     59.9139,
+     88.375
+    ],
+    "quantile_probs": [
+     0.0,
+     0.05,
+     0.1,
+     0.15,
+     0.2,
+     0.25,
+     0.3,
+     0.35,
+     0.4,
+     0.45,
+     0.5,
+     0.55,
+     0.6,
+     0.65,
+     0.7,
+     0.75,
+     0.8,
+     0.85,
+     0.9,
+     0.95,
+     1.0
+    ],
+    "mean": 41.965,
+    "n": 50,
+    "source": "fit_activity_durations"
+   },
+   "failure_probability": 0.0909,
+   "on_failure": "retry",
+   "resource_durations": {
+    "vgr_1": {
+     "family": "norm",
+     "params": {
+      "loc": 42.643656,
+      "scale": 15.557378
+     },
+     "mean": 42.6437,
+     "n": 32,
+     "source": "fit_activity_durations"
+    },
+    "vgr_2": {
+     "family": "empirical_quantiles",
+     "params": {},
+     "quantiles": [
+      35.734,
+      36.1726,
+      36.3697,
+      36.55905,
+      36.7156,
+      36.82025,
+      36.9707,
+      37.24865,
+      37.8898,
+      41.42795,
+      43.3515,
+      43.4974,
+      43.5874,
+      43.625,
+      43.625,
+      43.871,
+      44.094,
+      44.19475,
+      44.2546,
+      44.5133,
+      45.297
+     ],
+     "quantile_probs": [
+      0.0,
+      0.05,
+      0.1,
+      0.15,
+      0.2,
+      0.25,
+      0.3,
+      0.35,
+      0.4,
+      0.45,
+      0.5,
+      0.55,
+      0.6,
+      0.65,
+      0.7,
+      0.75,
+      0.8,
+      0.85,
+      0.9,
+      0.95,
+      1.0
+     ],
+     "mean": 40.7586,
+     "n": 18,
+     "source": "fit_activity_durations"
+    }
+   },
+   "notes": "Per-resource split per plan: vgr_1 broad (13.1-88.4 s, distance-dependent, norm passed moment/tail gate + bootstrap KS p=0.17), vgr_2 tight (35.7-45.3 s). All 5 failures (418) on vgr_1 (5/37=0.1351); vgr_2 0/18. Flag for per-resource conditioning at modeling stage (vgr_2 serves early transports, vgr_1 the back half + terminal tail; distance profiles may differ)."
+  },
+  {
+   "name": "/wt/pick_up_and_transport",
+   "eligible_resources": [
+    "wt_1",
+    "wt_2"
+   ],
+   "duration": {
+    "family": "empirical_quantiles",
+    "params": {},
+    "quantiles": [
+     25.906,
+     25.9268,
+     25.9425,
+     25.95225,
+     25.9716,
+     26.0155,
+     26.0974,
+     26.12705,
+     26.1846,
+     26.3263,
+     26.362,
+     26.7415,
+     28.373,
+     28.8822,
+     28.9118,
+     29.047,
+     29.1406,
+     29.20375,
+     29.2135,
+     29.22395,
+     29.235
+    ],
+    "quantile_probs": [
+     0.0,
+     0.05,
+     0.1,
+     0.15,
+     0.2,
+     0.25,
+     0.3,
+     0.35,
+     0.4,
+     0.45,
+     0.5,
+     0.55,
+     0.6,
+     0.65,
+     0.7,
+     0.75,
+     0.8,
+     0.85,
+     0.9,
+     0.95,
+     1.0
+    ],
+    "mean": 27.3769,
+    "n": 14,
+    "source": "fit_activity_durations"
+   },
+   "failure_probability": 0.0,
+   "on_failure": "retry",
+   "resource_durations": {
+    "wt_1": {
+     "family": "triang",
+     "params": {
+      "c": 0.30719,
+      "loc": 25.906,
+      "scale": 0.459
+     },
+     "mean": 26.106,
+     "n": 8,
+     "source": "fit_activity_durations"
+    },
+    "wt_2": {
+     "family": "triang",
+     "params": {
+      "c": 0.766667,
+      "loc": 28.875,
+      "scale": 0.36
+     },
+     "mean": 29.087,
+     "n": 6,
+     "source": "fit_activity_durations"
+    }
+   },
+   "notes": "Resources clearly differ (no overlap): wt_1 25.9-26.4 s (planned 22 s), wt_2 28.9-29.2 s (planned 27 s). Pooled fit kept as primary per plan; per-resource values in resource_durations; recommend per-resource conditioning at modeling stage."
+  }
+ ],
+ "arrivals": {
+  "model": "two_regime_bursts",
+  "description": "Two-phase release process (binding T2): Phase 1 = initial near-simultaneous burst of 8 cases at window start; Phase 2 = steady-state bursty arrivals of the remaining 10 releases over ~27.4 min. The two phases are modelled separately; no single mixed IAT across phases.",
+  "phase_split": {
+   "initial_burst_cases": 8,
+   "steady_state_cases": 10,
+   "transition_gap_s": 633.4968,
+   "basis": "First 8 cases released within 6.91 s of window start (15:08:27.91 - 15:08:34.82 UTC); the remaining 10 releases span 1641.8 s (15:19:08.32 - 16:01:31.12 UTC). Split point fixed by T2 (first 8 cases), not data-driven."
+  },
+  "initial_burst": {
+   "burst_size": {
+    "family": "categorical",
+    "values": [
+     8
+    ],
+    "probs": [
+     1.0
+    ],
+    "mean": 8.0,
+    "n": 1,
+    "source": "extract_inter_arrival_times (T2 phase split)"
+   },
+   "intra_burst_iat": {
+    "family": "empirical_quantiles",
+    "mean": 0.9865,
+    "std": 0.4258,
+    "min": 0.5096,
+    "max": 1.6558,
+    "median": 0.8962,
+    "cv": 0.4316,
+    "n": 7,
+    "source": "extract_inter_arrival_times (T2 phase split)",
+    "quantiles": [
+     0.5096,
+     0.5489,
+     0.5882,
+     0.6275,
+     0.6751,
+     0.7268,
+     0.7785,
+     0.8213,
+     0.8462,
+     0.8712,
+     0.8962,
+     0.8991,
+     0.902,
+     0.9049,
+     1.0217,
+     1.1953,
+     1.369,
+     1.5019,
+     1.5532,
+     1.6045,
+     1.6558
+    ],
+    "quantile_probs": [
+     0.0,
+     0.05,
+     0.1,
+     0.15,
+     0.2,
+     0.25,
+     0.3,
+     0.35,
+     0.4,
+     0.45,
+     0.5,
+     0.55,
+     0.6,
+     0.65,
+     0.7,
+     0.75,
+     0.8,
+     0.85,
+     0.9,
+     0.95,
+     1.0
+    ]
+   }
+  },
+  "steady_state": {
+   "n_releases": 10,
+   "span_s": 1641.8,
+   "interarrival": {
+    "family": "empirical_quantiles",
+    "mean": 182.4257,
+    "std": 261.8415,
+    "min": 0.6875,
+    "max": 799.9566,
+    "median": 93.4062,
+    "cv": 1.4353,
+    "n": 9,
+    "source": "extract_inter_arrival_times (T2 phase split)",
+    "quantiles": [
+     0.6875,
+     1.2125,
+     1.7376,
+     2.0718,
+     2.2154,
+     2.359,
+     3.6279,
+     4.8968,
+     23.1062,
+     58.2562,
+     93.4062,
+     111.6877,
+     129.9691,
+     167.4691,
+     224.1875,
+     280.9059,
+     295.6934,
+     310.481,
+     414.2911,
+     607.1239,
+     799.9566
+    ],
+    "quantile_probs": [
+     0.0,
+     0.05,
+     0.1,
+     0.15,
+     0.2,
+     0.25,
+     0.3,
+     0.35,
+     0.4,
+     0.45,
+     0.5,
+     0.55,
+     0.6,
+     0.65,
+     0.7,
+     0.75,
+     0.8,
+     0.85,
+     0.9,
+     0.95,
+     1.0
+    ],
+    "note": "IATs between the 10 steady-state releases. Bursts within the steady state are captured by the burst_size / intra_burst_iat / inter_burst_gap decomposition below; this distribution is the phase-level IAT (includes both intra-burst and gap IATs)."
+   },
+   "burst_size": {
+    "family": "categorical",
+    "values": [
+     1,
+     2,
+     3
+    ],
+    "probs": [
+     0.5,
+     0.3333,
+     0.1667
+    ],
+    "mean": 1.6667,
+    "n": 6,
+    "source": "extract_inter_arrival_times (T2 phase split)"
+   },
+   "intra_burst_iat": {
+    "family": "empirical_quantiles",
+    "mean": 2.6444,
+    "std": 2.0542,
+    "min": 0.6875,
+    "max": 5.5312,
+    "median": 2.1795,
+    "n": 4,
+    "source": "extract_inter_arrival_times (T2 phase split)",
+    "quantiles": [
+     0.6875,
+     0.8844,
+     1.0813,
+     1.2782,
+     1.475,
+     1.6719,
+     1.8688,
+     2.018,
+     2.0718,
+     2.1257,
+     2.1795,
+     2.2334,
+     2.2872,
+     2.341,
+     2.6762,
+     3.152,
+     3.6279,
+     4.1037,
+     4.5795,
+     5.0554,
+     5.5312
+    ],
+    "quantile_probs": [
+     0.0,
+     0.05,
+     0.1,
+     0.15,
+     0.2,
+     0.25,
+     0.3,
+     0.35,
+     0.4,
+     0.45,
+     0.5,
+     0.55,
+     0.6,
+     0.65,
+     0.7,
+     0.75,
+     0.8,
+     0.85,
+     0.9,
+     0.95,
+     1.0
+    ],
+    "note": "Within-burst spacing in the steady state (4 observations: 2.359, 0.6875, 5.5312, 2.0001 s)."
+   },
+   "inter_burst_gap": {
+    "family": "empirical_quantiles",
+    "mean": 326.2507,
+    "std": 280.9635,
+    "min": 93.4062,
+    "max": 799.9566,
+    "median": 280.9059,
+    "cv": 0.8612,
+    "n": 5,
+    "source": "extract_inter_arrival_times (T2 phase split)",
+    "quantiles": [
+     93.4062,
+     102.5469,
+     111.6877,
+     120.8284,
+     129.9691,
+     139.1099,
+     167.4691,
+     195.8283,
+     224.1875,
+     252.5467,
+     280.9059,
+     288.2997,
+     295.6934,
+     303.0872,
+     310.481,
+     317.8747,
+     414.2911,
+     510.7075,
+     607.1239,
+     703.5402,
+     799.9566
+    ],
+    "quantile_probs": [
+     0.0,
+     0.05,
+     0.1,
+     0.15,
+     0.2,
+     0.25,
+     0.3,
+     0.35,
+     0.4,
+     0.45,
+     0.5,
+     0.55,
+     0.6,
+     0.65,
+     0.7,
+     0.75,
+     0.8,
+     0.85,
+     0.9,
+     0.95,
+     1.0
+    ],
+    "note": "Gaps between steady-state bursts (5 observations: 799.9566, 317.8747, 139.1099, 93.4062, 280.9059 s). Triang fit rejected: observed mean 326.25 s is below the minimum possible triang mean 328.92 s on support [93.41, 799.96]."
+   }
+  },
+  "uncertainty_flags": [
+   "Small base: only 18 releases in one ~53-min window; all arrival parameters carry wide uncertainty - flag for the modeling stage.",
+   "Steady-state inter-burst gap (n=5) and intra-burst IAT (n=4) are too sparse for parametric fits; empirical quantiles used.",
+   "Initial burst size 8 is observed once; treat as a fixed initial condition (8 simultaneous releases at t=0), not a distribution.",
+   "Steady-state mean IAT (182.4 s) is dominated by the single 799.96 s gap; the upper tail (p90=607.1 s vs max=799.96 s) is poorly estimated from 9 samples.",
+   "Transition gap between the initial burst and the first steady-state release (633.5 s) is a single observation; not modelled as a distribution."
+  ]
+ }
+}""")
+
+RESOURCE_CAPACITIES = {r["name"]: int(r.get("capacity", 1)) for r in SPEC["resources"]}
+SIMULATION_TIME = float(SPEC.get("window", {}).get("horizon_s", 3600.0))
+ARRIVAL_RATE_SCALE = 1.0
+FAILURES_ENABLED = True
+MAX_ATTEMPTS = 20
+
+COLUMNS = ["case_id", "variant", "activity", "resource", "case_arrival", "queue_enter",
+           "time:timestamp", "operation_end_time", "lifecycle:state"]
+
+
+def make_sampler(dist, rng):
+    """Spec distribution -> zero-argument sampler (never negative)."""
+    fam, p = dist["family"], dist.get("params", {})
+    if fam == "constant":
+        return lambda: float(p["value"])
+    if fam == "categorical":
+        v, pr = np.asarray(dist["values"], float), np.asarray(dist["probs"], float)
+        return lambda: float(rng.choice(v, p=pr / pr.sum()))
+    if fam == "empirical_quantiles":
+        q, pr = np.asarray(dist["quantiles"], float), np.asarray(dist["quantile_probs"], float)
+        return lambda: float(np.interp(rng.uniform(), pr, q))
+    d = getattr(scipy.stats, fam)(**p)
+    return lambda: max(0.0, float(d.rvs(random_state=rng)))
+
+
+def run_single_replication(seed):
+    random.seed(seed)
+    np.random.seed(seed)
+    rng = np.random.default_rng(seed)
+    env = simpy.Environment()
+    log = []
+
+    cls_of = {r["name"]: r.get("resource_class", r["name"]) for r in SPEC["resources"]}
+    cp = SPEC.get("control_policies", {}) or {}
+    disc, prio = cp.get("queue_discipline", {}) or {}, cp.get("priority_order", {}) or {}
+    res = {}
+    for name, cap in RESOURCE_CAPACITIES.items():
+        if disc.get(cls_of.get(name, name)) == "priority":
+            res[name] = simpy.PriorityResource(env, capacity=int(cap))
+        else:
+            res[name] = simpy.Resource(env, capacity=int(cap))
+
+    acts = {a["name"]: a for a in SPEC["activities"]}
+    dur = {n: make_sampler(a["duration"], rng) for n, a in acts.items()}
+    variants = SPEC["variants"]
+    vprob = np.array([max(v.get("probability", 0.0), 0.0) for v in variants], float)
+    vprob = vprob / vprob.sum() if vprob.sum() > 0 else np.full(len(variants), 1 / len(variants))
+
+    def priority_of(resource, activity):
+        order = prio.get(cls_of.get(resource, resource), [])
+        return order.index(activity) if activity in order else len(order)
+
+    def pick_resource(step, act):
+        shares = {r: w for r, w in (step.get("resources") or {}).items() if r in res and w > 0}
+        if shares:
+            names = list(shares)
+            w = np.array([shares[n] for n in names], float)
+            return names[int(rng.choice(len(names), p=w / w.sum()))]
+        elig = [r for r in act.get("eligible_resources", []) if r in res] or list(res)
+        return min(elig, key=lambda r: (res[r].count + len(res[r].queue), rng.uniform()))
+
+    def do_step(case, step):
+        act = acts[step["activity"]]
+        p_fail = float(act.get("failure_probability", 0.0)) if FAILURES_ENABLED else 0.0
+        for _ in range(MAX_ATTEMPTS):
+            r = pick_resource(step, act)
+            q = env.now
+            req = (res[r].request(priority=priority_of(r, act["name"]))
+                   if isinstance(res[r], simpy.PriorityResource) else res[r].request())
+            with req:
+                yield req
+                s = env.now
+                yield env.timeout(dur[act["name"]]())
+                e = env.now
+            failed = rng.uniform() < p_fail
+            log.append((case["id"], case["variant"], act["name"], r, case["arrival"], q, s, e,
+                        "failure" if failed else "success"))
+            if not failed:
+                return True
+            if act.get("on_failure", "retry") != "retry":
+                return False
+        return False
+
+    def case_process(case, v, start_index=0):
+        steps = v["steps"]
+        exit_after = None
+        if rng.uniform() < float(v.get("early_exit_probability", 0.0)):
+            opts = v.get("early_exit_after_n_steps") or {}
+            if opts:
+                ks = list(opts)
+                w = np.array([opts[k] for k in ks], float)
+                exit_after = int(ks[int(rng.choice(len(ks), p=w / w.sum()))])
+        background, done = [], 0
+        for i in range(start_index, len(steps)):
+            step = steps[i]
+            if exit_after is not None and done >= exit_after:
+                return
+            if float(step.get("probability", 1.0)) < 1.0 and rng.uniform() > float(step["probability"]):
+                continue
+            if i == len(steps) - 1 and background:
+                yield simpy.AllOf(env, background)
+            nxt_concurrent = i + 1 < len(steps) and steps[i + 1].get("concurrent_with_previous", False)
+            if nxt_concurrent:
+                background.append(env.process(do_step(case, step)))
+                ok = True
+            else:
+                ok = yield env.process(do_step(case, step))
+            if not ok:
+                return
+            done += 1
+
+    counter = [0]
+
+    def release(v=None, start_index=0):
+        if v is None:
+            v = variants[int(rng.choice(len(variants), p=vprob))]
+        counter[0] += 1
+        case = {"id": f"case_{counter[0]}", "variant": v["name"], "arrival": env.now}
+        env.process(case_process(case, v, start_index))
+
+    arr = SPEC.get("arrivals", {}) or {}
+    model = arr.get("model", "renewal")
+
+    def arrivals():
+        scale = float(ARRIVAL_RATE_SCALE)
+        if model == "two_regime_bursts":
+            size, intra, gap = (make_sampler(arr["burst_size"], rng), make_sampler(arr["intra_burst_iat"], rng),
+                                make_sampler(arr["inter_burst_gap"], rng))
+            while True:
+                k = max(1, int(round(size())))
+                for j in range(k):
+                    release()
+                    if j < k - 1:
+                        yield env.timeout(intra() / scale)
+                yield env.timeout(gap() / scale)
+        else:
+            iat = make_sampler(arr["interarrival"], rng)
+            while True:
+                release()
+                yield env.timeout(iat() / scale)
+
+    # initial work in progress (no observed case ids are used)
+    for c in (SPEC.get("initial_state", {}) or {}).get("cases_in_progress", []):
+        v = next((x for x in variants if x["name"] == c.get("variant")), None)
+        if v is None:
+            continue
+        idx = next((i for i, s in enumerate(v["steps"]) if s["activity"] == c.get("current_activity")), 0)
+        release(v, idx)
+
+    env.process(arrivals())
+    env.run(until=SIMULATION_TIME)
+    return pd.DataFrame(log, columns=COLUMNS)
+
+
+if __name__ == "__main__":
+    df = run_single_replication(1)
+    print(df.groupby("activity").size().to_string())
+    print("cases:", df["case_id"].nunique(), "rows:", len(df))

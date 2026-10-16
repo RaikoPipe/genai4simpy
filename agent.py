@@ -11,6 +11,7 @@ Note: All sub-agents are created as CompiledSubAgent instances with explicit
 recursion_limit to work around deepagents#1698.
 """
 
+import json
 import os
 import uuid
 import time
@@ -25,12 +26,14 @@ logger = logging.getLogger(__name__)
 
 from langchain.chat_models import init_chat_model
 from langchain.agents import create_agent
-from langchain.agents.middleware import TodoListMiddleware, AgentMiddleware
+from langchain.agents.middleware import (TodoListMiddleware, AgentMiddleware, ContextEditingMiddleware,
+                                        ClearToolUsesEdit, ToolCallLimitMiddleware)
 from deepagents.middleware.subagents import SubAgentMiddleware
 from deepagents import CompiledSubAgent, create_deep_agent
 from deepagents.backends import FilesystemBackend
 from deepagents.middleware.filesystem import FilesystemMiddleware
 
+from src import telemetry
 from src.genai4simpy_agent.prompts import (
     WORKFLOW_INSTRUCTIONS,
     DATA_ANALYSIS_INSTRUCTIONS,
@@ -43,6 +46,11 @@ from src.genai4simpy_agent.prompts import (
     DISTRIBUTION_FITTING_INSTRUCTIONS,
     SIMPY_DEEP_CODING_AGENT_INSTRUCTIONS,
     SIMULATION_EVALUATOR_INSTRUCTIONS,
+    SIMPY_COMPILER_AGENT_INSTRUCTIONS,
+    EVALUATOR_COMPILER_MODE_ADDENDUM,
+    FRAMEWORK_TOOLS,
+    render,
+    assert_prompt_tools,
 )
 from src.data_extraction_tools.tools import (
     make_exploration_tools,
@@ -51,19 +59,25 @@ from src.data_extraction_tools.tools import (
     make_extract_inter_arrival_times,
     make_compute_grouped_statistics,
     make_fit_distribution,
-    make_export_kde_quantiles,
+    make_fit_activity_durations,
     make_apply_cleaning_and_save,
 )
+from src.data_extraction_tools.discovery import make_discovery_tools, make_set_log_schema_tool
+from src.data_extraction_tools.routing import make_routing_tool
+from src.genai4simpy_agent.spec import SpecStore, make_spec_tools, make_spec_status_tool
+from src.genai4simpy_agent.verification import make_verification_tools
+from src.genai4simpy_agent.compiler import make_compile_tool
+from src.genai4simpy_agent.spec_drafting import make_drafting_tools, make_deviation_tool
 from src.genai4simpy_agent.tools import (
     make_run_python,
     make_write_report,
     make_read_report,
     make_check_reports_tool,
-    make_simpy_knowledge_tool,
     make_write_simulation_code,
     make_edit_simulation_code,
     make_read_simulation_code,
     make_execute_simulation,
+    make_log_decision_tool,
     COLUMN_MAPPING_REPORT,
     TOPOLOGY_REPORT,
     EXTRACTION_PLAN_REPORT,
@@ -75,62 +89,108 @@ from src.genai4simpy_agent.tools import (
     EVALUATION_REPORT,
     make_write_todo_list,
     make_read_todo_list,
-    TODO_LIST_REPORT,
 )
 from dotenv import load_dotenv
 load_dotenv()
 
-# ---------------------------------------------------------------------------
-# Model (module-level — expensive to initialize, shared across all runs)
-# ---------------------------------------------------------------------------
-header_auth_key = os.getenv("OLLAMA_API_KEY")
-auth_value = header_auth_key if header_auth_key.startswith("Bearer ") else f"Bearer {header_auth_key}"
-kwargs = {"client_kwargs": {"headers": {"Authorization": auth_value}}}
-
 max_concurrent_extraction_units = 3
 RECURSION_LIMIT = 1000
+# 'compiler' (default): the coding agent compiles the spec (proposal P3a); 'llm': it writes simulation.py.
+CODEGEN_MODE = os.getenv("CODEGEN_MODE", "compiler")
+
+# ---------------------------------------------------------------------------
+# Model endpoint
+#
+# The model is served by an OpenAI-compatible server (vLLM; Ollama's /v1 also
+# works). Endpoint resolution: LLM_BASE_URL / LLM_API_KEY env vars, else the
+# endpoint file written by scripts/vllm_qwen38.sbatch once the server is up.
+# ---------------------------------------------------------------------------
+
+VLLM_ENDPOINT_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "logs", "vllm_endpoint.env")
+
+
+def resolve_endpoint() -> dict:
+    """Return {'base_url', 'api_key', 'model'(optional), ...} for the inference server."""
+    ep = {}
+    if os.path.exists(VLLM_ENDPOINT_FILE):
+        with open(VLLM_ENDPOINT_FILE) as f:
+            for line in f:
+                if "=" in line:
+                    k, v = line.strip().split("=", 1)
+                    ep[k] = v
+    base_url = os.getenv("LLM_BASE_URL") or ep.get("VLLM_BASE_URL")
+    if not base_url:
+        raise RuntimeError(f"No inference endpoint: set LLM_BASE_URL or start the vLLM job ({VLLM_ENDPOINT_FILE} missing).")
+    key = os.getenv("LLM_API_KEY") or os.getenv("OLLAMA_API_KEY") or "EMPTY"
+    return {"base_url": base_url, "api_key": key.removeprefix("Bearer "),
+            "model": ep.get("VLLM_MODEL"), "model_repo": ep.get("VLLM_MODEL_REPO"), "job": ep.get("VLLM_JOB")}
+
+
+def describe_model(base_url: str, api_key: str, model_name: str) -> dict:
+    """Pin what is actually served (issue V5): model root/checkpoint and context length."""
+    try:
+        r = httpx.get(base_url.rstrip("/") + "/models", headers={"Authorization": f"Bearer {api_key}"}, timeout=10)
+        for m in r.json().get("data", []):
+            if m.get("id") == model_name:
+                return {k: m.get(k) for k in ("id", "root", "max_model_len", "owned_by", "created")}
+        return {"error": f"model '{model_name}' not served", "served": [m.get("id") for m in r.json().get("data", [])]}
+    except Exception as exc:
+        return {"error": f"{type(exc).__name__}: {exc}"}
+
+
+def make_model(model_name: str, base_url: str, api_key: str):
+    """Chat model with the generation settings recorded in run_info.json."""
+    settings = {
+        "temperature": float(os.getenv("LLM_TEMPERATURE", "0.6")),
+        "top_p": float(os.getenv("LLM_TOP_P", "0.95")),
+        "max_tokens": int(os.getenv("LLM_MAX_TOKENS", "49152")),
+        # thinking_token_budget (vLLM): caps reasoning per call so a single turn cannot think
+        # past the output limit (which silently drops the tool call) or stall a run for minutes.
+        "extra_body": {"top_k": int(os.getenv("LLM_TOP_K", "20")),
+                       "thinking_token_budget": int(os.getenv("LLM_THINKING_BUDGET", "8192")),
+                       "chat_template_kwargs": {"enable_thinking": os.getenv("LLM_THINKING", "1") == "1"}},
+    }
+    # stream_chunk_timeout=None: vLLM's tool parser buffers a tool call until it is complete, so a
+    # large tool argument (spec section, model code) legitimately produces no chunk for minutes.
+    model = init_chat_model(model=model_name, model_provider="openai", base_url=base_url, api_key=api_key,
+                            timeout=float(os.getenv("LLM_TIMEOUT", "1800")), max_retries=0,
+                            stream_chunk_timeout=None, stream_usage=True, **settings)
+    return model, settings
+
 
 # ---------------------------------------------------------------------------
 # Transient model-call resilience
 #
-# The remote Ollama server parses tool calls server-side with a strict XML
-# parser. The Qwen model occasionally emits a malformed/truncated tool call
-# (e.g. ``element <function> closed by </parameter>`` or ``unexpected EOF``),
-# which Ollama returns as a hard ``ResponseError`` (status code -1). Because
-# nothing downstream retries it, a single bad sample aborts an entire
-# multi-phase run. The same applies to transient transport faults seen in the
-# run log (504 Gateway Time-out, ConnectError, RemoteProtocolError, llama-server
-# start timeouts). Since sampling is stochastic (temperature > 0), simply
-# re-issuing the model call almost always recovers.
+# Malformed tool calls from the model (server-side parser errors) and transport
+# faults (timeouts, 5xx, connection resets) are resampled with backoff instead
+# of aborting a multi-hour unattended run.
 # ---------------------------------------------------------------------------
 
-try:  # ollama is the backend client used by langchain-ollama
-    from ollama import ResponseError as _OllamaResponseError
-except Exception:  # pragma: no cover - fallback if export path changes
-    try:
-        from ollama._types import ResponseError as _OllamaResponseError
-    except Exception:
-        _OllamaResponseError = None
+try:
+    import openai as _openai
+    _OPENAI_TRANSIENT = (_openai.APIConnectionError, _openai.APITimeoutError,
+                         _openai.InternalServerError, _openai.RateLimitError)
+except Exception:  # pragma: no cover
+    _OPENAI_TRANSIENT = ()
 
-if _OllamaResponseError is None:
-    # The middleware exists primarily to retry Ollama's server-side malformed
-    # tool-call XML errors. If the import path ever changes and this resolves to
-    # None, those errors silently stop being retried and a single bad sample
-    # aborts an entire multi-phase run. Make that degradation visible instead of
-    # failing silently.
-    logger.warning(
-        "Could not import ollama.ResponseError; ModelRetryMiddleware will rely on "
-        "its broad retry tier for malformed-tool-call recovery. Check the installed "
-        "ollama package version."
-    )
+try:
+    from langchain_openai.chat_models._client_utils import StreamChunkTimeoutError as _StreamChunkTimeout
+    _OPENAI_TRANSIENT = (*_OPENAI_TRANSIENT, _StreamChunkTimeout)
+except Exception:  # pragma: no cover
+    pass
+
+try:  # optional: Ollama's native client
+    from ollama import ResponseError as _OllamaResponseError
+except Exception:  # pragma: no cover
+    _OllamaResponseError = None
 
 _TRANSIENT_MODEL_ERRORS = tuple(
-    exc for exc in (_OllamaResponseError, httpx.HTTPError) if isinstance(exc, type)
+    exc for exc in (_OllamaResponseError, httpx.HTTPError, *_OPENAI_TRANSIENT) if isinstance(exc, type)
 )
 
 
 class ModelRetryMiddleware(AgentMiddleware):
-    """Retry model-call failures from the Ollama backend.
+    """Retry model-call failures from the inference backend.
 
     Wraps the model invocation (sync and async) and re-issues it on failure,
     using exponential backoff with jitter. Re-running the call re-samples the
@@ -152,22 +212,56 @@ class ModelRetryMiddleware(AgentMiddleware):
 
     def __init__(
         self,
-        max_attempts: int = 4,
+        max_attempts: int = 12,
         base_delay: float = 2.0,
         broad_max_attempts: int = 3,
+        max_delay: float = 120.0,
     ) -> None:
         super().__init__()
         self.max_attempts = max_attempts
         self.base_delay = base_delay
         self.broad_max_attempts = broad_max_attempts
+        self.max_delay = max_delay
 
     def _backoff(self, attempt: int) -> float:
-        return self.base_delay * (2 ** attempt) + random.uniform(0, 1)
+        # Capped exponential backoff: 12 transient attempts span ~15 min, enough to ride out
+        # an inference-server restart without losing the run.
+        return min(self.max_delay, self.base_delay * (2 ** attempt)) + random.uniform(0, 1)
 
     def _is_transient(self, exc: BaseException) -> bool:
         return bool(_TRANSIENT_MODEL_ERRORS) and isinstance(exc, _TRANSIENT_MODEL_ERRORS)
 
+    _TRUNCATION_NOTE = (
+        "[orchestration note] Your previous response was cut off at the output-token limit, so "
+        "its tool call was lost. Think less and produce SMALLER pieces: e.g. write a short file "
+        "skeleton first and add the remaining functions with separate edit calls, or write one "
+        "spec section / one list chunk per call (merge=True).")
+
+    @staticmethod
+    def _truncated(response) -> bool:
+        msgs = getattr(response, "result", None) or []
+        meta = getattr(msgs[-1], "response_metadata", {}) if msgs else {}
+        return meta.get("finish_reason") == "length"
+
+    def _with_note(self, request):
+        from langchain_core.messages import HumanMessage
+        return request.override(messages=[*request.messages, HumanMessage(content=self._TRUNCATION_NOTE)])
+
     def wrap_model_call(self, request, handler):
+        response = self._wrap_model_call(request, handler)
+        if self._truncated(response):  # one re-issue with a steering note
+            telemetry.record("output_truncated", retried=True)
+            response = self._wrap_model_call(self._with_note(request), handler)
+        return response
+
+    async def awrap_model_call(self, request, handler):
+        response = await self._awrap_model_call(request, handler)
+        if self._truncated(response):
+            telemetry.record("output_truncated", retried=True)
+            response = await self._awrap_model_call(self._with_note(request), handler)
+        return response
+
+    def _wrap_model_call(self, request, handler):
         for attempt in range(max(self.max_attempts, self.broad_max_attempts)):
             try:
                 return handler(request)
@@ -176,14 +270,11 @@ class ModelRetryMiddleware(AgentMiddleware):
                 budget = self.max_attempts if transient else self.broad_max_attempts
                 if attempt >= budget - 1:
                     raise
-                if not transient:
-                    logger.warning(
-                        "Retrying model call after non-transient %s (attempt %d/%d): %s",
-                        type(exc).__name__, attempt + 1, budget, exc,
-                    )
+                telemetry.record("model_retry", error=type(exc).__name__, transient=transient,
+                                 attempt=attempt + 1, budget=budget, detail=str(exc)[:300])
                 time.sleep(self._backoff(attempt))
 
-    async def awrap_model_call(self, request, handler):
+    async def _awrap_model_call(self, request, handler):
         for attempt in range(max(self.max_attempts, self.broad_max_attempts)):
             try:
                 return await handler(request)
@@ -192,11 +283,8 @@ class ModelRetryMiddleware(AgentMiddleware):
                 budget = self.max_attempts if transient else self.broad_max_attempts
                 if attempt >= budget - 1:
                     raise
-                if not transient:
-                    logger.warning(
-                        "Retrying model call after non-transient %s (attempt %d/%d): %s",
-                        type(exc).__name__, attempt + 1, budget, exc,
-                    )
+                telemetry.record("model_retry", error=type(exc).__name__, transient=transient,
+                                 attempt=attempt + 1, budget=budget, detail=str(exc)[:300])
                 await asyncio.sleep(self._backoff(attempt))
 
 
@@ -257,6 +345,7 @@ class ToolThrashGuardMiddleware(AgentMiddleware):
         if self._repeat_count < self.warn_after:
             return result
 
+        telemetry.record("thrash_guard", tool=name, repeats=self._repeat_count)
         if self._repeat_count >= self.hard_after:
             nudge = (
                 f"\n\n[orchestration guard] Tool '{name}' has now returned the SAME "
@@ -274,11 +363,35 @@ class ToolThrashGuardMiddleware(AgentMiddleware):
             )
         return result.model_copy(update={"content": result.content + nudge})
 
+    def _error_result(self, request, exc: Exception):
+        """Turn an unexpected tool exception into feedback instead of aborting the run."""
+        from langchain_core.messages import ToolMessage
+
+        tc = getattr(request, "tool_call", None) or {}
+        tc_id = tc.get("id") if isinstance(tc, dict) else getattr(tc, "id", None)
+        name = self._tool_name(request)
+        telemetry.record("tool_exception", tool=name, error=f"{type(exc).__name__}: {exc}"[:300])
+        return ToolMessage(content=f"Error: tool '{name}' raised {type(exc).__name__}: {exc}. "
+                                   f"Check the arguments against the tool description and retry differently.",
+                           tool_call_id=tc_id or "unknown", name=name, status="error")
+
     def wrap_tool_call(self, request, handler):
-        return self._steer(request, handler(request))
+        try:
+            result = handler(request)
+        except Exception as exc:  # GraphInterrupt etc. derive from BaseException-safe types below
+            if type(exc).__name__ in ("GraphInterrupt", "ParentCommand", "GraphBubbleUp"):
+                raise
+            result = self._error_result(request, exc)
+        return self._steer(request, result)
 
     async def awrap_tool_call(self, request, handler):
-        return self._steer(request, await handler(request))
+        try:
+            result = await handler(request)
+        except Exception as exc:
+            if type(exc).__name__ in ("GraphInterrupt", "ParentCommand", "GraphBubbleUp"):
+                raise
+            result = self._error_result(request, exc)
+        return self._steer(request, result)
 
 
 # ---------------------------------------------------------------------------
@@ -314,7 +427,8 @@ def setup_run_dirs(dataset_name: str, run_name: str, data_path: str) -> dict:
         output/
         └── {dataset_name}/
             └── {run_name}/
-                ├── reports/            ← markdown reports + kde_quantiles/
+                ├── reports/            ← markdown reports, simulation_spec.json, hitl_log.jsonl
+                │   ├── evidence/       ← full JSON results of the deterministic tools
                 │   └── simulation/     ← generated SimPy models
                 ├── work_files/         ← temp files (eventlog.parquet, cleaned)
                 └── experiment_results/ ← run metadata (run_info.json)
@@ -323,10 +437,10 @@ def setup_run_dirs(dataset_name: str, run_name: str, data_path: str) -> dict:
     reports_dir = os.path.join(run_dir, "reports")
     sim_dir = os.path.join(run_dir, "reports", "simulation")
     work_dir = os.path.join(run_dir, "work_files")
-    kde_dir = os.path.join(run_dir, "reports", "kde_quantiles")
+    evidence_dir = os.path.join(run_dir, "reports", "evidence")
     experiment_results_dir = os.path.join(run_dir, "experiment_results")
 
-    for d in (reports_dir, sim_dir, work_dir, kde_dir, experiment_results_dir):
+    for d in (reports_dir, sim_dir, work_dir, evidence_dir, experiment_results_dir):
         os.makedirs(d, exist_ok=True)
 
     # Construction-time I/O runs *outside* the agent loop, so the model cannot
@@ -359,418 +473,234 @@ def setup_run_dirs(dataset_name: str, run_name: str, data_path: str) -> dict:
         "reports_dir": reports_dir,
         "sim_dir": sim_dir,
         "work_dir": work_dir,
-        "kde_dir": kde_dir,
+        "evidence_dir": evidence_dir,
         "experiment_results_dir": experiment_results_dir,
         "df": df,
     }
+
+
 
 
 # ---------------------------------------------------------------------------
 # Agent factory
 # ---------------------------------------------------------------------------
 
-def create_run_agent(dataset_name: str, run_name: str, data_path: str, model_name:str) -> dict:
+def create_run_agent(dataset_name: str, run_name: str, data_path: str, model_name: str | None = None) -> dict:
     """
     Build all agents for a specific run, scoped to that run's directory.
 
     Creates the directory structure, loads the dataset, and wires every tool
-    factory to the run-specific paths.  Agents are restricted to the run folder
-    via ``FilesystemBackend``.
+    factory to the run-specific paths. Prompts are rendered from the same paths
+    and checked against each agent's tool list (no prompt may name a tool the
+    agent lacks).
 
-    Returns a dict with keys:
-        ``agent``, ``data_analysis_graph``, ``topology_analysis_graph``,
-        ``extraction_planning_graph``, ``simpy_deep_coding_graph``,
-        ``simulation_evaluator_graph``, ``run_dir``, ``experiment_results_dir``
+    Returns a dict with keys ``agent`` (orchestrator), ``subagents`` (name ->
+    compiled graph, for standalone testing), ``run_dir``,
+    ``experiment_results_dir`` and ``model_info``.
     """
     ctx = setup_run_dirs(dataset_name, run_name, data_path)
     df = ctx["df"]
-    reports_dir = ctx["reports_dir"]
-    sim_dir = ctx["sim_dir"]
-    work_dir = ctx["work_dir"]
-    kde_dir = ctx["kde_dir"]
-    run_dir = ctx["run_dir"]
+    reports_dir, sim_dir, work_dir = ctx["reports_dir"], ctx["sim_dir"], ctx["work_dir"]
+    evidence_dir, run_dir = ctx["evidence_dir"], ctx["run_dir"]
 
-    # Restrict filesystem access to this run's folder
-    _backend = FilesystemBackend(
-        root_dir=os.path.join(os.getcwd(), run_dir),
-        virtual_mode=False,
-    )
+    endpoint = resolve_endpoint()
+    model_name = model_name or endpoint.get("model")
+    model, gen_settings = make_model(model_name, endpoint["base_url"], endpoint["api_key"])
+    model_info = {"name": model_name, "base_url": endpoint["base_url"], "checkpoint": endpoint.get("model_repo"),
+                  "codegen_mode": CODEGEN_MODE,
+                  "context_clear_trigger_tokens": int(os.getenv("CONTEXT_CLEAR_TRIGGER", "40000")),
+                  "run_python_limit_per_subagent_call": int(os.getenv("RUN_PYTHON_LIMIT", "8")),
+                  "server_job": endpoint.get("job"), "generation": gen_settings,
+                  "served": describe_model(endpoint["base_url"], endpoint["api_key"], model_name)}
 
-    model = init_chat_model(
-        model=model_name,
-        model_provider="openai",
-        temperature=0.2,
-        reasoning="high",
-        base_url="http://localhost:11434",
-        num_ctx=128000,
-        **kwargs
-    )
+    # virtual_mode: file tools see only this run directory (paths are rooted at it).
+    _backend = FilesystemBackend(root_dir=os.path.join(os.getcwd(), run_dir), virtual_mode=True)
 
-    ORCHESTRATOR_INSTRUCTIONS = (
-        WORKFLOW_INSTRUCTIONS + "\n\n" + "=" * 80 + "\n\n"
-        + EXTRACTION_DELEGATION_INSTRUCTIONS.format(
-            max_concurrent_extraction_units=max_concurrent_extraction_units,
-        )
-    )
+    # ---- shared state: spec store and providers for the deterministic tools ----
+    store = SpecStore(reports_dir)
+    schema_provider = lambda: store.get("log_schema")
 
-    def _build_subagent(name: str, description: str, system_prompt: str, tools: list) -> CompiledSubAgent:
-        ag = create_agent(
-            model=model,
-            tools=tools,
-            system_prompt=system_prompt,
-            middleware=[
-                ModelRetryMiddleware(),
-                ToolThrashGuardMiddleware(),
-                TodoListMiddleware(),
-                FilesystemMiddleware(backend=_backend),
-            ],
-        ).with_config({"recursion_limit": RECURSION_LIMIT})
-        return CompiledSubAgent(name=name, description=description, runnable=ag)
+    def censoring_provider():
+        path = os.path.join(os.getcwd(), evidence_dir, "detect_censoring.json")
+        if not os.path.exists(path):
+            return None
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
 
-    # ------------------------------------------------------------------
-    # Sub-agents
-    # ------------------------------------------------------------------
+    def _on_schema(schema: dict, meta: dict) -> None:
+        store.put("log_schema", schema, author="data-analysis-agent")
+        store.put("window", {"t0": meta["t0"], "horizon_s": meta["T"]}, author="data-analysis-agent")
 
-    data_analysis_sub_agent = _build_subagent(
-        name="data-analysis-agent",
-        description=(
-            "Delegate dataset exploration, column meaning derivation, simulation relevance "
-            "classification, data cleaning, and column mapping to the data analysis agent. "
-            "It will analyze the event log, classify each column as simulation-relevant or not, "
-            "confirm exclusions and cleaning operations with the user, save a cleaned dataset "
-            "to data/eventlog_cleaned.parquet, and return a finalized column mapping report."
-        ),
-        system_prompt=DATA_ANALYSIS_INSTRUCTIONS,
-        tools=[
-            *make_exploration_tools(df),
-            make_run_python(work_dir=work_dir),
-            make_apply_cleaning_and_save(df, work_dir=work_dir),
-            make_read_report(COLUMN_MAPPING_REPORT, output_dir=reports_dir),
-            make_write_report(COLUMN_MAPPING_REPORT, output_dir=reports_dir),
-        ],
-    )
+    discovery = {t.name: t for t in make_discovery_tools(df, schema_provider, evidence_dir)}
+    verification = make_verification_tools(sim_dir, df, schema_provider, store.load, evidence_dir)
+    hitl_log = os.path.join(reports_dir, "hitl_log.jsonl")
+    paths = {"SIM_FILE": os.path.join(sim_dir, "simulation.py"),
+             "MAX_CONCURRENT": str(max_concurrent_extraction_units)}
 
-    topology_analysis_sub_agent = _build_subagent(
-        name="topology-analysis-agent",
-        description=(
-            "Delegate topology analysis to identify resource classes, resource entities, "
-            "routing per product variant, resource pooling, and other structural aspects "
-            "of the manufacturing system. Returns findings for user validation or questions "
-            "requiring clarification."
-        ),
-        system_prompt=TOPOLOGY_ANALYSIS_INSTRUCTIONS,
-        tools=[
-            *make_exploration_tools(df),
-            make_run_python(work_dir=work_dir),
-            make_read_report(COLUMN_MAPPING_REPORT, output_dir=reports_dir),
-            make_read_report(TOPOLOGY_REPORT, output_dir=reports_dir),
-            make_write_report(TOPOLOGY_REPORT, output_dir=reports_dir),
-        ],
-    )
+    # Context engineering (P7): sub-agents accumulate large tool results (fit tables, run_python
+    # dumps); above the trigger, older results are replaced by a placeholder. Everything cleared
+    # can be re-read from the spec or the evidence files.
+    ctx_trigger = int(os.getenv("CONTEXT_CLEAR_TRIGGER", "40000"))
 
-    extraction_planning_sub_agent = _build_subagent(
-        name="extraction-planning-agent",
-        description=(
-            "Delegate extraction planning to determine which parameter extractions are needed "
-            "based on the topology and column mapping, recommend which sub-agents to deploy, "
-            "and produce a high-level extraction plan. "
-            "It will return findings for user validation or questions requiring clarification."
-        ),
-        system_prompt=EXTRACTION_PLANNING_INSTRUCTIONS,
-        tools=[
-            *make_exploration_tools(df),
-            make_run_python(work_dir=work_dir),
-            make_read_report(COLUMN_MAPPING_REPORT, output_dir=reports_dir),
-            make_read_report(TOPOLOGY_REPORT, output_dir=reports_dir),
-            make_read_report(EXTRACTION_PLAN_REPORT, output_dir=reports_dir),
-            make_write_report(EXTRACTION_PLAN_REPORT, output_dir=reports_dir),
-        ],
-    )
+    def _middleware(filesystem: bool = True, extra: list | None = None) -> list:
+        mw = [ModelRetryMiddleware(), ToolThrashGuardMiddleware(), TodoListMiddleware(),
+              ContextEditingMiddleware(edits=[ClearToolUsesEdit(
+                  trigger=ctx_trigger, keep=4,
+                  placeholder="[older tool result cleared to save context — re-run the tool or read_spec if needed]")])]
+        # Over-exploration guard: agents tended to re-derive deterministic tool results in
+        # run_python. After the budget, further run_python calls are refused (with a message)
+        # and the agent continues with the dedicated tools.
+        mw.append(ToolCallLimitMiddleware(tool_name="run_python",
+                                          run_limit=int(os.getenv("RUN_PYTHON_LIMIT", "8")), exit_behavior="continue"))
+        if filesystem:
+            mw.append(FilesystemMiddleware(backend=_backend))
+        return mw + (extra or [])
 
-    durations_processing_times_sub_agent = _build_subagent(
-        name="durations-processing-times-agent",
-        description=(
-            "Delegate duration computation and processing time extraction. "
-            "The agent reads its own context (column mapping, extraction plan) from disk. "
-            "It writes results to durations_processing_times_report."
-        ),
-        system_prompt=DURATIONS_PROCESSING_TIMES_INSTRUCTIONS,
-        tools=[
-            make_compute_duration(df),
-            make_extract_processing_times(df),
-            make_run_python(work_dir=work_dir),
-            make_read_report(COLUMN_MAPPING_REPORT, output_dir=reports_dir),
-            make_read_report(TOPOLOGY_REPORT, output_dir=reports_dir),
-            make_read_report(EXTRACTION_PLAN_REPORT, output_dir=reports_dir),
-            make_read_report(DURATIONS_PROCESSING_TIMES_REPORT, output_dir=reports_dir),
-            make_write_report(DURATIONS_PROCESSING_TIMES_REPORT, output_dir=reports_dir),
-        ],
-    )
+    built: dict[str, CompiledSubAgent] = {}
 
-    inter_arrival_times_sub_agent = _build_subagent(
-        name="inter-arrival-times-agent",
-        description=(
-            "Delegate inter-arrival time computation. "
-            "The agent reads its own context (column mapping, extraction plan) from disk. "
-            "It writes results to inter_arrival_times_report."
-        ),
-        system_prompt=INTER_ARRIVAL_TIMES_INSTRUCTIONS,
-        tools=[
-            make_extract_inter_arrival_times(df),
-            make_run_python(work_dir=work_dir),
-            make_read_report(COLUMN_MAPPING_REPORT, output_dir=reports_dir),
-            make_read_report(TOPOLOGY_REPORT, output_dir=reports_dir),
-            make_read_report(EXTRACTION_PLAN_REPORT, output_dir=reports_dir),
-            make_read_report(INTER_ARRIVAL_TIMES_REPORT, output_dir=reports_dir),
-            make_write_report(INTER_ARRIVAL_TIMES_REPORT, output_dir=reports_dir),
-        ],
-    )
+    def _build(name: str, description: str, prompt: str, tools: list, filesystem: bool = True,
+               extra_mw: list | None = None) -> CompiledSubAgent:
+        prompt = render(prompt, **paths)
+        framework = {"write_todos"} | ({"read_file", "write_file", "edit_file", "ls", "glob", "grep"} if filesystem else set()) \
+            | ({"task"} if extra_mw else set())
+        assert_prompt_tools(name, prompt, {t.name for t in tools}, framework)
+        graph = create_agent(model=model, tools=tools, system_prompt=prompt, name=name,
+                             middleware=_middleware(filesystem, extra_mw)).with_config({"recursion_limit": RECURSION_LIMIT})
+        built[name] = CompiledSubAgent(name=name, description=description, runnable=graph)
+        return built[name]
 
-    quantities_quality_sub_agent = _build_subagent(
-        name="quantities-quality-agent",
-        description=(
-            "Delegate quantity and quality statistics extraction. "
-            "The agent reads its own context (column mapping, extraction plan) from disk. "
-            "It writes results to quantities_quality_report."
-        ),
-        system_prompt=QUANTITIES_QUALITY_INSTRUCTIONS,
-        tools=[
-            make_compute_grouped_statistics(df),
-            make_run_python(work_dir=work_dir),
-            make_read_report(COLUMN_MAPPING_REPORT, output_dir=reports_dir),
-            make_read_report(TOPOLOGY_REPORT, output_dir=reports_dir),
-            make_read_report(EXTRACTION_PLAN_REPORT, output_dir=reports_dir),
-            make_read_report(QUANTITIES_QUALITY_REPORT, output_dir=reports_dir),
-            make_write_report(QUANTITIES_QUALITY_REPORT, output_dir=reports_dir),
-        ],
-    )
-
-    distribution_fitting_sub_agent = _build_subagent(
-        name="distribution-fitting-agent",
-        description=(
-            "Delegate distribution fitting for all key simulation parameters. "
-            "The agent reads its own context (column mapping, extraction plan, and other "
-            "sub-agent generated_reports) from disk. "
-            "It writes results to distribution_fitting_report."
-        ),
-        system_prompt=DISTRIBUTION_FITTING_INSTRUCTIONS,
-        tools=[
-            make_compute_duration(df),
-            make_fit_distribution(df),
-            make_export_kde_quantiles(output_dir=kde_dir),
-            make_run_python(work_dir=work_dir),
-            make_read_report(COLUMN_MAPPING_REPORT, output_dir=reports_dir),
-            make_read_report(TOPOLOGY_REPORT, output_dir=reports_dir),
-            make_read_report(EXTRACTION_PLAN_REPORT, output_dir=reports_dir),
-            make_read_report(DURATIONS_PROCESSING_TIMES_REPORT, output_dir=reports_dir),
-            make_read_report(INTER_ARRIVAL_TIMES_REPORT, output_dir=reports_dir),
-            make_read_report(DISTRIBUTION_FITTING_REPORT, output_dir=reports_dir),
-            make_write_report(DISTRIBUTION_FITTING_REPORT, output_dir=reports_dir),
-        ],
-    )
+    rr = lambda r: make_read_report(r, output_dir=reports_dir)
+    wr = lambda r: make_write_report(r, output_dir=reports_dir)
+    spec_tools = lambda agent: [*make_spec_tools(store, agent),
+                                *make_drafting_tools(df, store, schema_provider, agent)]
 
     # ------------------------------------------------------------------
-    # SimPy Deep Coding Agent
+    # Phase 1-4 sub-agents
     # ------------------------------------------------------------------
 
-    simpy_deep_coding_tools = [
-        make_read_report(TOPOLOGY_REPORT, output_dir=reports_dir),
-        make_read_report(DISTRIBUTION_FITTING_REPORT, output_dir=reports_dir),
-        make_read_report(DURATIONS_PROCESSING_TIMES_REPORT, output_dir=reports_dir),
-        make_read_report(INTER_ARRIVAL_TIMES_REPORT, output_dir=reports_dir),
-        make_read_report(QUANTITIES_QUALITY_REPORT, output_dir=reports_dir),
-        make_write_simulation_code(sim_dir=sim_dir),
-        make_edit_simulation_code(sim_dir=sim_dir),
-        make_read_simulation_code(sim_dir=sim_dir),
-        make_execute_simulation(sim_dir=sim_dir),
-        make_write_report(EXECUTION_RESULTS_REPORT, output_dir=reports_dir),
-    ]
+    _build("data-analysis-agent",
+           "Delegate dataset exploration, column meaning and relevance classification, the log "
+           "schema (set_log_schema), data cleaning, and the column mapping report.",
+           DATA_ANALYSIS_INSTRUCTIONS,
+           [*make_exploration_tools(df), make_set_log_schema_tool(df, _on_schema), make_run_python(work_dir=work_dir),
+            make_apply_cleaning_and_save(df, work_dir=work_dir), rr(COLUMN_MAPPING_REPORT), wr(COLUMN_MAPPING_REPORT)])
 
-    simpy_deep_coding_graph_inner = create_agent(
-        model=model,
-        tools=simpy_deep_coding_tools,
-        system_prompt=SIMPY_DEEP_CODING_AGENT_INSTRUCTIONS,
-        middleware=[ModelRetryMiddleware(), ToolThrashGuardMiddleware(), TodoListMiddleware()],
-    ).with_config({"recursion_limit": RECURSION_LIMIT})
+    _build("topology-analysis-agent",
+           "Delegate topology and control-logic discovery: censoring, resources, variant routings "
+           "with early exits, dispatching rules / priorities, release control and intra-case "
+           "concurrency. Writes the spec sections and the topology report.",
+           TOPOLOGY_ANALYSIS_INSTRUCTIONS,
+           [*make_exploration_tools(df), *discovery.values(),
+            make_routing_tool(df, schema_provider, censoring_provider, evidence_dir),
+            make_run_python(work_dir=work_dir), *spec_tools("topology-analysis-agent"),
+            make_deviation_tool(store, evidence_dir),
+            rr(COLUMN_MAPPING_REPORT), rr(TOPOLOGY_REPORT), wr(TOPOLOGY_REPORT)])
 
-    simpy_deep_coding_agent = CompiledSubAgent(
-        name="simpy-deep-coding-agent",
-        description=(
-            "Delegate SimPy simulation code generation and validation. "
-            "It reads all extraction generated_reports, writes SimPy code to files, "
-            "iteratively edits and executes until the simulation runs correctly, "
-            "and returns working SimPy code or a failure report."
-        ),
-        runnable=simpy_deep_coding_graph_inner,
-    )
+    _build("extraction-planning-agent",
+           "Delegate extraction planning: which parameter extractions are needed and which "
+           "extraction sub-agents to deploy.",
+           EXTRACTION_PLANNING_INSTRUCTIONS,
+           [*spec_tools("extraction-planning-agent"), rr(COLUMN_MAPPING_REPORT), rr(TOPOLOGY_REPORT),
+            rr(EXTRACTION_PLAN_REPORT), wr(EXTRACTION_PLAN_REPORT)])
+
+    _build("durations-processing-times-agent",
+           "Delegate service-time and failure-probability extraction per activity (spec "
+           "section 'activities'). Reads its context from disk.",
+           DURATIONS_PROCESSING_TIMES_INSTRUCTIONS,
+           [make_fit_activity_durations(df, schema_provider), make_compute_duration(df),
+            make_extract_processing_times(df), make_run_python(work_dir=work_dir),
+            *spec_tools("durations-processing-times-agent"), rr(EXTRACTION_PLAN_REPORT),
+            rr(DURATIONS_PROCESSING_TIMES_REPORT), wr(DURATIONS_PROCESSING_TIMES_REPORT)])
+
+    _build("inter-arrival-times-agent",
+           "Delegate arrival / release process extraction (spec section 'arrivals'). Reads its "
+           "context from disk.",
+           INTER_ARRIVAL_TIMES_INSTRUCTIONS,
+           [make_extract_inter_arrival_times(df), make_run_python(work_dir=work_dir),
+            *spec_tools("inter-arrival-times-agent"), rr(EXTRACTION_PLAN_REPORT),
+            rr(INTER_ARRIVAL_TIMES_REPORT), wr(INTER_ARRIVAL_TIMES_REPORT)])
+
+    _build("quantities-quality-agent",
+           "Delegate quantity and quality statistics extraction. Reads its context from disk.",
+           QUANTITIES_QUALITY_INSTRUCTIONS,
+           [make_compute_grouped_statistics(df), make_run_python(work_dir=work_dir),
+            *spec_tools("quantities-quality-agent"), rr(EXTRACTION_PLAN_REPORT), rr(COLUMN_MAPPING_REPORT),
+            rr(QUANTITIES_QUALITY_REPORT), wr(QUANTITIES_QUALITY_REPORT)])
+
+    _build("distribution-fitting-agent",
+           "Delegate the review and finalisation of all distributions in the spec ('activities', "
+           "'arrivals'). Runs after the other extraction agents.",
+           DISTRIBUTION_FITTING_INSTRUCTIONS,
+           [make_fit_activity_durations(df, schema_provider), make_fit_distribution(df),
+            make_run_python(work_dir=work_dir), *spec_tools("distribution-fitting-agent"),
+            rr(EXTRACTION_PLAN_REPORT), rr(DURATIONS_PROCESSING_TIMES_REPORT), rr(INTER_ARRIVAL_TIMES_REPORT),
+            rr(DISTRIBUTION_FITTING_REPORT), wr(DISTRIBUTION_FITTING_REPORT)])
 
     # ------------------------------------------------------------------
-    # Simulation Evaluator Agent
+    # Phase 5: coding agent (nested inside the evaluator)
     # ------------------------------------------------------------------
 
-    evaluator_tools = [
-        make_read_report(DISTRIBUTION_FITTING_REPORT, output_dir=reports_dir),
-        make_read_report(DURATIONS_PROCESSING_TIMES_REPORT, output_dir=reports_dir),
-        make_read_report(INTER_ARRIVAL_TIMES_REPORT, output_dir=reports_dir),
-        make_read_report(QUANTITIES_QUALITY_REPORT, output_dir=reports_dir),
-        make_read_report(EXECUTION_RESULTS_REPORT, output_dir=reports_dir),
-        make_read_report(TOPOLOGY_REPORT, output_dir=reports_dir),
-        make_read_simulation_code(sim_dir=sim_dir),
-        make_write_report(EVALUATION_REPORT, output_dir=reports_dir),
-    ]
+    code_tools = [make_read_simulation_code(sim_dir=sim_dir), make_execute_simulation(sim_dir=sim_dir),
+                  *verification, wr(EXECUTION_RESULTS_REPORT)]
+    if CODEGEN_MODE == "compiler":
+        coder_prompt = SIMPY_COMPILER_AGENT_INSTRUCTIONS
+        code_tools = [make_compile_tool(store.load, sim_dir), *code_tools]
+    else:
+        coder_prompt = SIMPY_DEEP_CODING_AGENT_INSTRUCTIONS
+        code_tools = [make_write_simulation_code(sim_dir=sim_dir), make_edit_simulation_code(sim_dir=sim_dir),
+                      *code_tools]
+    coder = _build("simpy-deep-coding-agent",
+                   "Delegate SimPy model generation from the simulation spec, and change requests. "
+                   "Produces simulation.py (compiled from the spec or written), executes and verifies it.",
+                   coder_prompt,
+                   [*spec_tools("simpy-deep-coding-agent"), *code_tools],
+                   filesystem=False)
 
-    simulation_evaluator_graph_inner = create_agent(
-        model=model,
-        tools=evaluator_tools,
-        system_prompt=SIMULATION_EVALUATOR_INSTRUCTIONS,
-        middleware=[
-            ModelRetryMiddleware(),
-            ToolThrashGuardMiddleware(),
-            TodoListMiddleware(),
-            SubAgentMiddleware(
-                backend=_backend,
-                subagents=[simpy_deep_coding_agent],
-            ),
-        ],
-    ).with_config({"recursion_limit": RECURSION_LIMIT})
-
-    simulation_evaluator_agent = CompiledSubAgent(
-        name="simulation-evaluator-agent",
-        description=(
-            "Delegate SimPy simulation generation, validation, and evaluation. "
-            "This agent coordinates with the coding agent internally: it generates code, "
-            "cross-checks generated code against extraction reports, "
-            "iterates until the simulation is accurate, and writes "
-            "a final evaluation report."
-        ),
-        runnable=simulation_evaluator_graph_inner,
-    )
+    compiler_mode = CODEGEN_MODE == "compiler"
+    _build("simulation-evaluator-agent",
+           "Delegate SimPy simulation generation, deterministic verification (contract, behaviour "
+           "vs the observed log, metamorphic relations) and evaluation. Coordinates the coding "
+           "agent internally and writes the evaluation report.",
+           SIMULATION_EVALUATOR_INSTRUCTIONS + (EVALUATOR_COMPILER_MODE_ADDENDUM if compiler_mode else ""),
+           [*(spec_tools("simulation-evaluator-agent") if compiler_mode
+              else make_spec_tools(store, "simulation-evaluator-agent", writable=[])), make_read_simulation_code(sim_dir=sim_dir), *verification,
+            make_deviation_tool(store, evidence_dir),
+            rr(EXECUTION_RESULTS_REPORT), wr(EVALUATION_REPORT)],
+           filesystem=False,
+           extra_mw=[SubAgentMiddleware(backend=_backend, subagents=[coder])])
 
     # ------------------------------------------------------------------
     # Orchestrator
     # ------------------------------------------------------------------
 
+    orchestrator_prompt = render(
+        WORKFLOW_INSTRUCTIONS + "\n\n" + "=" * 80 + "\n\n" + EXTRACTION_DELEGATION_INSTRUCTIONS, **paths)
     orchestrator_tools = [
-        make_run_python(work_dir=work_dir),
         make_check_reports_tool(output_dir=reports_dir),
+        make_spec_status_tool(store),
+        make_deviation_tool(store, evidence_dir),
+        rr(EXTRACTION_PLAN_REPORT),
         make_write_todo_list(output_dir=reports_dir),
         make_read_todo_list(output_dir=reports_dir),
+        make_log_decision_tool(hitl_log, "orchestrator"),
     ]
-
-    all_subagents = [
-        data_analysis_sub_agent,
-        topology_analysis_sub_agent,
-        extraction_planning_sub_agent,
-        durations_processing_times_sub_agent,
-        inter_arrival_times_sub_agent,
-        quantities_quality_sub_agent,
-        distribution_fitting_sub_agent,
-        simulation_evaluator_agent,
-    ]
-
+    assert_prompt_tools("orchestrator", orchestrator_prompt, {t.name for t in orchestrator_tools}, FRAMEWORK_TOOLS)
+    phase_agents = [n for n in built if n != "simpy-deep-coding-agent"]
     main_agent = create_deep_agent(
         model=model,
         tools=orchestrator_tools,
-        system_prompt=ORCHESTRATOR_INSTRUCTIONS,
-        subagents=all_subagents,
+        system_prompt=orchestrator_prompt,
+        subagents=[built[n] for n in phase_agents],
         middleware=[ModelRetryMiddleware(), ToolThrashGuardMiddleware()],
-    ).with_config({"recursion_limit": RECURSION_LIMIT})
-
-    # ------------------------------------------------------------------
-    # Standalone sub-agent graphs (for independent testing via LangGraph Studio)
-    # ------------------------------------------------------------------
-
-    data_analysis_graph = create_agent(
-        model=model,
-        tools=[
-            *make_exploration_tools(df),
-            make_run_python(work_dir=work_dir),
-            make_apply_cleaning_and_save(df, work_dir=work_dir),
-            make_read_report(COLUMN_MAPPING_REPORT, output_dir=reports_dir),
-            make_write_report(COLUMN_MAPPING_REPORT, output_dir=reports_dir),
-        ],
-        system_prompt=DATA_ANALYSIS_INSTRUCTIONS,
-        middleware=[
-            ModelRetryMiddleware(),
-            ToolThrashGuardMiddleware(),
-            TodoListMiddleware(),
-            FilesystemMiddleware(backend=_backend),
-        ],
-    ).with_config({"recursion_limit": RECURSION_LIMIT})
-
-    topology_analysis_graph = create_agent(
-        model=model,
-        tools=[
-            *make_exploration_tools(df),
-            make_run_python(work_dir=work_dir),
-            make_read_report(COLUMN_MAPPING_REPORT, output_dir=reports_dir),
-            make_read_report(TOPOLOGY_REPORT, output_dir=reports_dir),
-            make_write_report(TOPOLOGY_REPORT, output_dir=reports_dir),
-        ],
-        system_prompt=TOPOLOGY_ANALYSIS_INSTRUCTIONS,
-        middleware=[
-            ModelRetryMiddleware(),
-            ToolThrashGuardMiddleware(),
-            TodoListMiddleware(),
-            FilesystemMiddleware(backend=_backend),
-        ],
-    ).with_config({"recursion_limit": RECURSION_LIMIT})
-
-    extraction_planning_graph = create_agent(
-        model=model,
-        tools=[
-            *make_exploration_tools(df),
-            make_run_python(work_dir=work_dir),
-            make_read_report(COLUMN_MAPPING_REPORT, output_dir=reports_dir),
-            make_read_report(TOPOLOGY_REPORT, output_dir=reports_dir),
-            make_read_report(EXTRACTION_PLAN_REPORT, output_dir=reports_dir),
-            make_write_report(EXTRACTION_PLAN_REPORT, output_dir=reports_dir),
-        ],
-        system_prompt=EXTRACTION_PLANNING_INSTRUCTIONS,
-        middleware=[
-            ModelRetryMiddleware(),
-            ToolThrashGuardMiddleware(),
-            TodoListMiddleware(),
-            FilesystemMiddleware(backend=_backend),
-        ],
-    ).with_config({"recursion_limit": RECURSION_LIMIT})
-
-    simpy_deep_coding_graph = create_agent(
-        model=model,
-        tools=simpy_deep_coding_tools,
-        system_prompt=SIMPY_DEEP_CODING_AGENT_INSTRUCTIONS,
-        middleware=[
-            ModelRetryMiddleware(),
-            ToolThrashGuardMiddleware(),
-            TodoListMiddleware(),
-            FilesystemMiddleware(backend=_backend),
-        ],
-    ).with_config({"recursion_limit": RECURSION_LIMIT})
-
-    simulation_evaluator_graph = create_agent(
-        model=model,
-        tools=evaluator_tools,
-        system_prompt=SIMULATION_EVALUATOR_INSTRUCTIONS,
-        middleware=[
-            ModelRetryMiddleware(),
-            ToolThrashGuardMiddleware(),
-            TodoListMiddleware(),
-            SubAgentMiddleware(
-                backend=_backend,
-                subagents=[simpy_deep_coding_agent],
-            ),
-        ],
     ).with_config({"recursion_limit": RECURSION_LIMIT})
 
     return {
         "agent": main_agent,
-        "data_analysis_graph": data_analysis_graph,
-        "topology_analysis_graph": topology_analysis_graph,
-        "extraction_planning_graph": extraction_planning_graph,
-        "simpy_deep_coding_graph": simpy_deep_coding_graph,
-        "simulation_evaluator_graph": simulation_evaluator_graph,
+        "subagents": {n: sa["runnable"] for n, sa in built.items()},
+        "spec_store": store,
         "run_dir": run_dir,
         "experiment_results_dir": ctx["experiment_results_dir"],
+        "model_info": model_info,
     }
 
 
@@ -782,12 +712,11 @@ def create_run_agent(dataset_name: str, run_name: str, data_path: str, model_nam
 # ---------------------------------------------------------------------------
 
 if not os.environ.get("GENAI_SKIP_DEFAULT_INIT"):
-    model_name = os.getenv("HUMAN_MODE_MODEL")
-
-    _default = create_run_agent(_DEFAULT_DATASET_NAME, _generate_run_name(), _DEFAULT_DATA_PATH, model_name=model_name)
+    _default = create_run_agent(_DEFAULT_DATASET_NAME, _generate_run_name(), _DEFAULT_DATA_PATH,
+                                model_name=os.getenv("HUMAN_MODE_MODEL"))
     agent = _default["agent"]
-    data_analysis_graph = _default["data_analysis_graph"]
-    topology_analysis_graph = _default["topology_analysis_graph"]
-    extraction_planning_graph = _default["extraction_planning_graph"]
-    simpy_deep_coding_graph = _default["simpy_deep_coding_graph"]
-    simulation_evaluator_graph = _default["simulation_evaluator_graph"]
+    data_analysis_graph = _default["subagents"]["data-analysis-agent"]
+    topology_analysis_graph = _default["subagents"]["topology-analysis-agent"]
+    extraction_planning_graph = _default["subagents"]["extraction-planning-agent"]
+    simpy_deep_coding_graph = _default["subagents"]["simpy-deep-coding-agent"]
+    simulation_evaluator_graph = _default["subagents"]["simulation-evaluator-agent"]

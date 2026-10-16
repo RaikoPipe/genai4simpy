@@ -1,0 +1,261 @@
+{
+  "n_steps_with_enabled_time": 379,
+  "overall": {
+    "n": 379,
+    "mean_wait_s": 53.3,
+    "p90_wait_s": 61.9,
+    "share_contention": 0.255,
+    "share_prioritization": 0.225,
+    "share_extraneous": 0.52
+  },
+  "by_resource_class": {
+    "dm": {
+      "n": 10,
+      "mean_wait_s": 3.0,
+      "p90_wait_s": 4.5,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "hbw": {
+      "n": 98,
+      "mean_wait_s": 177.9,
+      "p90_wait_s": 643.4,
+      "share_contention": 0.235,
+      "share_prioritization": 0.261,
+      "share_extraneous": 0.505
+    },
+    "hw": {
+      "n": 17,
+      "mean_wait_s": 3.1,
+      "p90_wait_s": 4.9,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "mm": {
+      "n": 41,
+      "mean_wait_s": 4.8,
+      "p90_wait_s": 5.3,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "ov": {
+      "n": 40,
+      "mean_wait_s": 5.0,
+      "p90_wait_s": 5.8,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "pm": {
+      "n": 8,
+      "mean_wait_s": 3.2,
+      "p90_wait_s": 5.3,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "sm": {
+      "n": 32,
+      "mean_wait_s": 2.5,
+      "p90_wait_s": 3.3,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "vgr": {
+      "n": 104,
+      "mean_wait_s": 19.4,
+      "p90_wait_s": 58.4,
+      "share_contention": 0.529,
+      "share_prioritization": 0.0,
+      "share_extraneous": 0.471
+    },
+    "wt": {
+      "n": 29,
+      "mean_wait_s": 6.5,
+      "p90_wait_s": 8.4,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    }
+  },
+  "by_activity_top": {
+    "/hbw/unload": {
+      "n": 37,
+      "mean_wait_s": 465.1,
+      "p90_wait_s": 832.1,
+      "share_contention": 0.237,
+      "share_prioritization": 0.264,
+      "share_extraneous": 0.499
+    },
+    "/vgr/pick_up_and_transport": {
+      "n": 104,
+      "mean_wait_s": 19.4,
+      "p90_wait_s": 58.4,
+      "share_contention": 0.529,
+      "share_prioritization": 0.0,
+      "share_extraneous": 0.471
+    },
+    "/wt/pick_up_and_transport": {
+      "n": 29,
+      "mean_wait_s": 6.5,
+      "p90_wait_s": 8.4,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "/ov/burn": {
+      "n": 32,
+      "mean_wait_s": 5.0,
+      "p90_wait_s": 5.7,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "/hbw/store_empty_bucket": {
+      "n": 34,
+      "mean_wait_s": 3.5,
+      "p90_wait_s": 4.3,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "/mm/deburr": {
+      "n": 19,
+      "mean_wait_s": 4.7,
+      "p90_wait_s": 5.4,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "/hbw/get_empty_bucket": {
+      "n": 14,
+      "mean_wait_s": 4.0,
+      "p90_wait_s": 5.5,
+      "share_contention": 0.255,
+      "share_prioritization": 0.0,
+      "share_extraneous": 0.745
+    },
+    "/hw/human_review": {
+      "n": 17,
+      "mean_wait_s": 3.1,
+      "p90_wait_s": 4.9,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "/mm/mill": {
+      "n": 11,
+      "mean_wait_s": 4.5,
+      "p90_wait_s": 4.9,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "/sm/transport": {
+      "n": 19,
+      "mean_wait_s": 2.5,
+      "p90_wait_s": 3.3,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "/hbw/store": {
+      "n": 13,
+      "mean_wait_s": 3.4,
+      "p90_wait_s": 4.6,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "/ov/temper": {
+      "n": 8,
+      "mean_wait_s": 4.9,
+      "p90_wait_s": 5.7,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "/mm/drill": {
+      "n": 8,
+      "mean_wait_s": 4.7,
+      "p90_wait_s": 5.3,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "/sm/sort": {
+      "n": 13,
+      "mean_wait_s": 2.4,
+      "p90_wait_s": 3.2,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "/mm/transport_from_to": {
+      "n": 3,
+      "mean_wait_s": 6.1,
+      "p90_wait_s": 8.3,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "/dm/lower": {
+      "n": 4,
+      "mean_wait_s": 3.2,
+      "p90_wait_s": 4.1,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "/pm/punch_recesses": {
+      "n": 2,
+      "mean_wait_s": 5.5,
+      "p90_wait_s": 7.0,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "/pm/punch_gill": {
+      "n": 4,
+      "mean_wait_s": 2.6,
+      "p90_wait_s": 4.0,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "/dm/drill": {
+      "n": 4,
+      "mean_wait_s": 2.5,
+      "p90_wait_s": 2.9,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "/dm/cylindrical_drill": {
+      "n": 2,
+      "mean_wait_s": 3.6,
+      "p90_wait_s": 4.4,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "/pm/punch_ribbing": {
+      "n": 2,
+      "mean_wait_s": 2.3,
+      "p90_wait_s": 2.3,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    }
+  },
+  "findings": [
+    "hbw: 26% of waiting is caused by later-enabled steps overtaking -> queue is NOT FIFO; run test_dispatching_rules for 'hbw'.",
+    "hbw: 50% of waiting happens while the resource is idle -> delay is not caused by this resource (hand-off/transport/release control).",
+    "ov: 100% of waiting happens while the resource is idle -> delay is not caused by this resource (hand-off/transport/release control).",
+    "wt: 100% of waiting happens while the resource is idle -> delay is not caused by this resource (hand-off/transport/release control)."
+  ]
+}

@@ -1,0 +1,254 @@
+{
+  "n_steps_with_enabled_time": 192,
+  "overall": {
+    "n": 192,
+    "mean_wait_s": 79.1,
+    "p90_wait_s": 139.4,
+    "share_contention": 0.202,
+    "share_prioritization": 0.154,
+    "share_extraneous": 0.644
+  },
+  "by_resource_class": {
+    "dm": {
+      "n": 4,
+      "mean_wait_s": 4.1,
+      "p90_wait_s": 5.4,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "hbw": {
+      "n": 46,
+      "mean_wait_s": 289.0,
+      "p90_wait_s": 923.6,
+      "share_contention": 0.181,
+      "share_prioritization": 0.176,
+      "share_extraneous": 0.643
+    },
+    "hw": {
+      "n": 14,
+      "mean_wait_s": 3.9,
+      "p90_wait_s": 7.5,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "mm": {
+      "n": 21,
+      "mean_wait_s": 6.2,
+      "p90_wait_s": 8.9,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "ov": {
+      "n": 18,
+      "mean_wait_s": 6.2,
+      "p90_wait_s": 9.5,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "pm": {
+      "n": 5,
+      "mean_wait_s": 3.2,
+      "p90_wait_s": 4.7,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "sm": {
+      "n": 15,
+      "mean_wait_s": 2.7,
+      "p90_wait_s": 3.0,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "vgr": {
+      "n": 55,
+      "mean_wait_s": 26.4,
+      "p90_wait_s": 78.7,
+      "share_contention": 0.456,
+      "share_prioritization": 0.0,
+      "share_extraneous": 0.544
+    },
+    "wt": {
+      "n": 14,
+      "mean_wait_s": 5.5,
+      "p90_wait_s": 6.8,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    }
+  },
+  "by_activity_top": {
+    "/hbw/unload": {
+      "n": 17,
+      "mean_wait_s": 609.2,
+      "p90_wait_s": 1131.3,
+      "share_contention": 0.199,
+      "share_prioritization": 0.222,
+      "share_extraneous": 0.579
+    },
+    "/hbw/get_empty_bucket": {
+      "n": 11,
+      "mean_wait_s": 261.0,
+      "p90_wait_s": 696.3,
+      "share_contention": 0.122,
+      "share_prioritization": 0.015,
+      "share_extraneous": 0.863
+    },
+    "/vgr/pick_up_and_transport": {
+      "n": 55,
+      "mean_wait_s": 26.4,
+      "p90_wait_s": 78.7,
+      "share_contention": 0.456,
+      "share_prioritization": 0.0,
+      "share_extraneous": 0.544
+    },
+    "/ov/burn": {
+      "n": 13,
+      "mean_wait_s": 6.3,
+      "p90_wait_s": 9.8,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "/wt/pick_up_and_transport": {
+      "n": 14,
+      "mean_wait_s": 5.5,
+      "p90_wait_s": 6.8,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "/mm/deburr": {
+      "n": 9,
+      "mean_wait_s": 6.5,
+      "p90_wait_s": 10.7,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "/hw/human_review": {
+      "n": 14,
+      "mean_wait_s": 3.9,
+      "p90_wait_s": 7.5,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "/hbw/store_empty_bucket": {
+      "n": 15,
+      "mean_wait_s": 3.3,
+      "p90_wait_s": 4.4,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "/mm/mill": {
+      "n": 6,
+      "mean_wait_s": 6.8,
+      "p90_wait_s": 8.5,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "/ov/temper": {
+      "n": 5,
+      "mean_wait_s": 5.8,
+      "p90_wait_s": 7.8,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "/sm/transport": {
+      "n": 9,
+      "mean_wait_s": 2.9,
+      "p90_wait_s": 3.5,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "/mm/drill": {
+      "n": 4,
+      "mean_wait_s": 5.1,
+      "p90_wait_s": 5.6,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "/hbw/store": {
+      "n": 3,
+      "mean_wait_s": 5.2,
+      "p90_wait_s": 6.2,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "/sm/sort": {
+      "n": 6,
+      "mean_wait_s": 2.5,
+      "p90_wait_s": 2.9,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "/mm/transport_from_to": {
+      "n": 2,
+      "mean_wait_s": 5.1,
+      "p90_wait_s": 5.4,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "/pm/punch_ribbing": {
+      "n": 2,
+      "mean_wait_s": 4.4,
+      "p90_wait_s": 5.5,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "/dm/cylindrical_drill": {
+      "n": 2,
+      "mean_wait_s": 4.3,
+      "p90_wait_s": 5.3,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "/dm/lower": {
+      "n": 2,
+      "mean_wait_s": 3.8,
+      "p90_wait_s": 4.9,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "/pm/punch_recesses": {
+      "n": 2,
+      "mean_wait_s": 2.4,
+      "p90_wait_s": 3.0,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "/pm/punch_gill": {
+      "n": 1,
+      "mean_wait_s": 2.6,
+      "p90_wait_s": 2.6,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    }
+  },
+  "findings": [
+    "hbw: 64% of waiting happens while the resource is idle -> delay is not caused by this resource (hand-off/transport/release control).",
+    "mm: 100% of waiting happens while the resource is idle -> delay is not caused by this resource (hand-off/transport/release control).",
+    "ov: 100% of waiting happens while the resource is idle -> delay is not caused by this resource (hand-off/transport/release control).",
+    "vgr: 54% of waiting happens while the resource is idle -> delay is not caused by this resource (hand-off/transport/release control).",
+    "wt: 100% of waiting happens while the resource is idle -> delay is not caused by this resource (hand-off/transport/release control)."
+  ]
+}

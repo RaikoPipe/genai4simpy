@@ -1,0 +1,97 @@
+{
+  "wall_clock_s": 21058.0,
+  "totals": {
+    "model_calls": 161.0,
+    "model_latency_s": 19952.42,
+    "input_tokens": 0.0,
+    "output_tokens": 0.0,
+    "reasoning_tokens": 0.0,
+    "tool_calls": 181.0,
+    "tool_latency_s": 40117.16,
+    "tool_errors": 1.0
+  },
+  "per_agent": {
+    "model": {
+      "model_calls": 9.0,
+      "model_latency_s": 236.4,
+      "input_tokens": 0.0,
+      "output_tokens": 0.0,
+      "reasoning_tokens": 0.0
+    },
+    "tools": {
+      "tool_calls": 12.0,
+      "tool_latency_s": 20821.33
+    },
+    "simulation-evaluator-agent": {
+      "model_calls": 20.0,
+      "model_latency_s": 2570.24,
+      "input_tokens": 0.0,
+      "output_tokens": 0.0,
+      "reasoning_tokens": 0.0,
+      "tool_calls": 28.0,
+      "tool_latency_s": 18275.56
+    },
+    "simpy-deep-coding-agent": {
+      "model_calls": 132.0,
+      "model_latency_s": 17145.78,
+      "input_tokens": 0.0,
+      "output_tokens": 0.0,
+      "reasoning_tokens": 0.0,
+      "tool_calls": 141.0,
+      "tool_latency_s": 1020.27,
+      "tool_errors": 1.0
+    }
+  },
+  "peak_input_tokens": {
+    "model": 0,
+    "simulation-evaluator-agent": 0,
+    "simpy-deep-coding-agent": 0
+  },
+  "event_counts": {
+    "thrash_guard": 7
+  },
+  "events": [
+    {
+      "ts": "2026-10-15T02:22:38.820655+00:00",
+      "kind": "thrash_guard",
+      "tool": "edit_simulation_code",
+      "repeats": 3
+    },
+    {
+      "ts": "2026-10-15T02:51:03.613763+00:00",
+      "kind": "thrash_guard",
+      "tool": "execute_simulation",
+      "repeats": 3
+    },
+    {
+      "ts": "2026-10-15T03:30:58.086500+00:00",
+      "kind": "thrash_guard",
+      "tool": "edit_simulation_code",
+      "repeats": 3
+    },
+    {
+      "ts": "2026-10-15T03:31:12.771548+00:00",
+      "kind": "thrash_guard",
+      "tool": "edit_simulation_code",
+      "repeats": 4
+    },
+    {
+      "ts": "2026-10-15T03:31:22.034002+00:00",
+      "kind": "thrash_guard",
+      "tool": "edit_simulation_code",
+      "repeats": 5
+    },
+    {
+      "ts": "2026-10-15T03:34:55.798996+00:00",
+      "kind": "thrash_guard",
+      "tool": "edit_simulation_code",
+      "repeats": 3
+    },
+    {
+      "ts": "2026-10-15T05:56:37.320504+00:00",
+      "kind": "thrash_guard",
+      "tool": "log_decision",
+      "repeats": 3
+    }
+  ]
+}

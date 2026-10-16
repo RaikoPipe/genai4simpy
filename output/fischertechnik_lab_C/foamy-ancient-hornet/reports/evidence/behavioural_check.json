@@ -1,0 +1,254 @@
+{
+  "ok": true,
+  "replications": 30,
+  "T_s": 5461.5,
+  "terminal_activity": "/hbw/store",
+  "kpis": {
+    "completed_cases": {
+      "mean": 12.033,
+      "pi_lo": 6.725,
+      "pi_hi": 18.825,
+      "gt": 13,
+      "bias_pct": -7.436,
+      "pi_covered": true
+    },
+    "cases_entered": {
+      "mean": 41.467,
+      "pi_lo": 23.45,
+      "pi_hi": 60.375,
+      "gt": 37,
+      "bias_pct": 12.072,
+      "pi_covered": true
+    },
+    "wip_at_T": {
+      "mean": 29.433,
+      "pi_lo": 13.45,
+      "pi_hi": 47.55,
+      "gt": 24,
+      "bias_pct": 22.639,
+      "pi_covered": true
+    },
+    "flow_time_completed_s": {
+      "mean": 794.65,
+      "pi_lo": 560.26,
+      "pi_hi": 1170.552,
+      "gt": 597.549,
+      "bias_pct": 32.985,
+      "pi_covered": true
+    },
+    "time_in_system_all_s": {
+      "mean": 539.046,
+      "pi_lo": 375.198,
+      "pi_hi": 802.91,
+      "gt": 430.603,
+      "bias_pct": 25.184,
+      "pi_covered": true
+    },
+    "failure_rate": {
+      "mean": 0.014,
+      "pi_lo": 0.005,
+      "pi_hi": 0.026,
+      "gt": 0.013,
+      "bias_pct": 3.242,
+      "pi_covered": true
+    },
+    "overlapping_steps_per_case": {
+      "mean": 0.904,
+      "pi_lo": 0.315,
+      "pi_hi": 1.676,
+      "gt": 1.462,
+      "bias_pct": -38.134,
+      "pi_covered": true
+    },
+    "idle_s": {
+      "mean": 303.505,
+      "pi_lo": 92.649,
+      "pi_hi": 664.207,
+      "gt": 169.538,
+      "bias_pct": 79.019,
+      "pi_covered": true
+    },
+    "activity_mape": {
+      "mean": 9.918,
+      "pi_lo": 7.08,
+      "pi_hi": 16.579
+    },
+    "activity_coverage": {
+      "mean": 0.946,
+      "pi_lo": 0.905,
+      "pi_hi": 0.952
+    },
+    "variant_jsd": {
+      "mean": 0.049,
+      "pi_lo": 0.01,
+      "pi_hi": 0.112
+    },
+    "utilization_mae_pp": {
+      "mean": 4.499,
+      "pi_lo": 1.689,
+      "pi_hi": 10.438
+    },
+    "mean_wip": {
+      "mean": 5.323,
+      "pi_lo": 2.124,
+      "pi_hi": 11.845,
+      "gt": 6.068,
+      "bias_pct": -12.276,
+      "pi_covered": true
+    }
+  },
+  "waiting_by_class_s": {
+    "dm": {
+      "observed": 3.0,
+      "sim": 0.1
+    },
+    "hbw": {
+      "observed": 177.9,
+      "sim": 92.1
+    },
+    "hw": {
+      "observed": 3.1,
+      "sim": 10.3
+    },
+    "mm": {
+      "observed": 4.8,
+      "sim": 0.3
+    },
+    "ov": {
+      "observed": 5.0,
+      "sim": 5.1
+    },
+    "pm": {
+      "observed": 3.2,
+      "sim": 0.3
+    },
+    "sm": {
+      "observed": 2.5,
+      "sim": 0.2
+    },
+    "vgr": {
+      "observed": 19.4,
+      "sim": 32.7
+    },
+    "wt": {
+      "observed": 6.5,
+      "sim": 0.2
+    }
+  },
+  "idle_by_class_s": {
+    "dm": {
+      "observed": 0.8,
+      "sim": 0.1
+    },
+    "hbw": {
+      "observed": 16.6,
+      "sim": 124.2
+    },
+    "hw": {
+      "observed": 4.8,
+      "sim": 9.2
+    },
+    "mm": {
+      "observed": 15.3,
+      "sim": 0.4
+    },
+    "ov": {
+      "observed": 8.7,
+      "sim": 9.8
+    },
+    "pm": {
+      "observed": 1.2,
+      "sim": 0.2
+    },
+    "sm": {
+      "observed": 2.9,
+      "sim": 0.3
+    },
+    "vgr": {
+      "observed": 113.8,
+      "sim": 159.8
+    },
+    "wt": {
+      "observed": 7.4,
+      "sim": 0.2
+    }
+  },
+  "release_spacing_median_s": {
+    "observed": 1.6,
+    "sim": 4.8
+  },
+  "utilization": {
+    "dm_2": {
+      "observed": 0.046,
+      "sim": 0.042
+    },
+    "hbw_1": {
+      "observed": 0.187,
+      "sim": 0.196
+    },
+    "hbw_2": {
+      "observed": 0.476,
+      "sim": 0.573
+    },
+    "hw_1": {
+      "observed": 0.129,
+      "sim": 0.152
+    },
+    "mm_1": {
+      "observed": 0.056,
+      "sim": 0.063
+    },
+    "mm_2": {
+      "observed": 0.048,
+      "sim": 0.047
+    },
+    "ov_1": {
+      "observed": 0.146,
+      "sim": 0.178
+    },
+    "ov_2": {
+      "observed": 0.108,
+      "sim": 0.116
+    },
+    "pm_1": {
+      "observed": 0.037,
+      "sim": 0.043
+    },
+    "sm_1": {
+      "observed": 0.053,
+      "sim": 0.045
+    },
+    "sm_2": {
+      "observed": 0.041,
+      "sim": 0.054
+    },
+    "vgr_1": {
+      "observed": 0.429,
+      "sim": 0.548
+    },
+    "vgr_2": {
+      "observed": 0.263,
+      "sim": 0.292
+    },
+    "wt_1": {
+      "observed": 0.067,
+      "sim": 0.076
+    },
+    "wt_2": {
+      "observed": 0.081,
+      "sim": 0.095
+    }
+  },
+  "distances": {
+    "cycle_time_emd_s": 239.371,
+    "arrival_emd_s": 364.386,
+    "bigram_jsd": 0.161
+  },
+  "findings": [
+    "activities never simulated: ['/dm/cylindrical_drill']",
+    "mean waiting at hw: sim 10 s vs observed 3 s",
+    "mean waiting at wt: sim 0 s vs observed 7 s",
+    "idle/wait time per completed case before hbw steps: sim 124 s vs observed 17 s",
+    "largest utilisation deviations (pp): vgr_1 12, hbw_2 10, ov_1 3"
+  ]
+}

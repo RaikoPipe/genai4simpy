@@ -1,0 +1,61 @@
+{
+  "by": "resource",
+  "n_decision_points": 44,
+  "by_resource_class": {
+    "hbw": {
+      "n_decision_points": 34,
+      "n_mixed_activity_points": 15,
+      "agreement": {
+        "FIFO": 0.559,
+        "LIFO": 0.441,
+        "case_age": 0.824,
+        "most_progressed": 0.583,
+        "activity_priority": 0.971
+      },
+      "best_rule": "activity_priority",
+      "equivalent_rules": [],
+      "fifo_rejected": true,
+      "learned_activity_priority": [
+        "/hbw/store",
+        "/hbw/store_empty_bucket",
+        "/hbw/get_empty_bucket",
+        "/hbw/unload"
+      ],
+      "top_overtakes": [
+        {
+          "chosen": "/hbw/store_empty_bucket",
+          "over_waiting": "/hbw/unload",
+          "count": 55
+        },
+        {
+          "chosen": "/hbw/store",
+          "over_waiting": "/hbw/get_empty_bucket",
+          "count": 1
+        }
+      ]
+    },
+    "vgr": {
+      "n_decision_points": 10,
+      "n_mixed_activity_points": 0,
+      "agreement": {
+        "FIFO": 1.0,
+        "LIFO": 0.0,
+        "case_age": 0.7,
+        "most_progressed": 0.6,
+        "activity_priority": 1.0
+      },
+      "best_rule": "FIFO",
+      "equivalent_rules": [
+        "activity_priority"
+      ],
+      "fifo_rejected": false,
+      "learned_activity_priority": [],
+      "top_overtakes": []
+    }
+  },
+  "findings": [
+    "hbw: FIFO rejected - best rule activity_priority (97%) vs FIFO (56%) over 34 decisions. Model a priority queue (simpy.PriorityResource) for hbw with activity order ['/hbw/store', '/hbw/store_empty_bucket', '/hbw/get_empty_bucket', '/hbw/unload'].",
+    "vgr: FIFO consistent (100% over 10 decisions)."
+  ],
+  "note": "activity_priority agreement is leave-one-out; FIFO wins ties."
+}

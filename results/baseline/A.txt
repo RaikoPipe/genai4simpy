@@ -1,0 +1,6 @@
+completed_cases            GT=    3.000 mean=   17.997 PI=[18.000,18.000] bias=+499.9% pct=0.0
+flow_time_completed_s      GT=  656.437 mean= 1210.284 PI=[1105.229,1357.764] bias=+84.4% pct=0.0
+time_in_system_all_s       GT=  660.481 mean= 1210.278 PI=[1105.229,1357.764] bias=+83.2% pct=0.0
+failure_rate               GT=    0.042 mean=    0.040 PI=[0.021,0.062] bias=-3.6% pct=53.3
+activity_mape              GT=    0.000 mean=   12.015 PI=[11.413,12.634]
+variant_jsd                GT=    0.000 mean=    0.000 PI=[0.000,0.000]

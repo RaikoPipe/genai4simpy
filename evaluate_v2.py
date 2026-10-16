@@ -67,8 +67,9 @@ def simulate(mod, seed, T):
     df = df.copy()
     if "service_start" not in df:            # v1 models log service start in time:timestamp
         df["service_start"] = df["time:timestamp"]
-    if "case_arrival" not in df:
-        df["case_arrival"] = np.nan
+    for c in ("case_arrival", "queue_enter"):      # contract-v2 columns are optional here
+        if c not in df:
+            df[c] = np.nan
     return df
 
 
@@ -81,14 +82,15 @@ def _union_length(iv):
     return tot + ce - cs
 
 
-def kpis(log, T, ref=None):
+def kpis(log, T, ref=None, terminal=TERMINAL):
     """Identical definitions for real and simulated logs. `ref` = GT KPI dict
-    (from the real log) for reference-dependent KPIs (JSD, MAPE)."""
+    (from the real log) for reference-dependent KPIs (JSD, MAPE). `terminal` is
+    the activity whose successful execution marks a case as completed."""
     L = log[log["operation_end_time"] <= T + EPS].sort_values(["case_id", "service_start"]).copy()
     L["dur"] = L["operation_end_time"] - L["service_start"]
     c = L.groupby("case_id").agg(a=("service_start", "min"), z=("operation_end_time", "max"),
                                  rel=("case_arrival", "min"), v=("variant", "first"))
-    done_ids = L.loc[(L["activity"] == TERMINAL) & (L["lifecycle:state"] == "success"), "case_id"].unique()
+    done_ids = L.loc[(L["activity"] == terminal) & (L["lifecycle:state"] == "success"), "case_id"].unique()
     cd = c.loc[c.index.isin(done_ids)]
     k = {"cases_entered": len(c), "completed_cases": len(cd), "wip_at_T": len(c) - len(cd),
          "flow_time_completed_s": float((cd.z - cd.a).mean()) if len(cd) else np.nan,

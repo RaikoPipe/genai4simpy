@@ -1,0 +1,67 @@
+{
+  "run_name": "eager-nice-cow",
+  "dataset": "fischertechnik_lab_A",
+  "replication_index": 1,
+  "total_replications": 1,
+  "data_path": "data/fischertechnik_lab_A/block-A.csv",
+  "status": "success",
+  "error": null,
+  "traceback": null,
+  "started_at": "2026-10-15T01:38:09.720258+00:00",
+  "finished_at": "2026-10-15T03:16:38.997468+00:00",
+  "elapsed_seconds": 5907,
+  "elapsed_str": "1:38:26",
+  "run_dir": "output/fischertechnik_lab_A/eager-nice-cow",
+  "model": "qwen3.8-27b-int4",
+  "model_info": {
+    "name": "qwen3.8-27b-int4",
+    "base_url": "http://gpu05:41437/v1",
+    "checkpoint": "cyankiwi/Qwen3.8-27B-AWQ-INT4",
+    "codegen_mode": "llm",
+    "context_clear_trigger_tokens": 40000,
+    "server_job": "496846",
+    "generation": {
+      "temperature": 0.6,
+      "top_p": 0.95,
+      "max_tokens": 49152,
+      "extra_body": {
+        "top_k": 20,
+        "thinking_token_budget": 8192,
+        "chat_template_kwargs": {
+          "enable_thinking": true
+        }
+      }
+    },
+    "served": {
+      "id": "qwen3.8-27b-int4",
+      "root": "cyankiwi/Qwen3.8-27B-AWQ-INT4",
+      "max_model_len": 131072,
+      "owned_by": "vllm",
+      "created": 1792028290
+    }
+  },
+  "telemetry_totals": {
+    "model_calls": 67.0,
+    "model_latency_s": 5746.56,
+    "input_tokens": 0.0,
+    "output_tokens": 0.0,
+    "reasoning_tokens": 0.0,
+    "tool_calls": 76.0,
+    "tool_latency_s": 8676.48,
+    "tool_errors": 1.0
+  },
+  "telemetry_events": {
+    "thrash_guard": 2
+  },
+  "spec_sections": {
+    "log_schema": true,
+    "window": true,
+    "resources": true,
+    "activities": true,
+    "variants": true,
+    "arrivals": true,
+    "control_policies": true,
+    "initial_state": true,
+    "assumptions": true
+  }
+}

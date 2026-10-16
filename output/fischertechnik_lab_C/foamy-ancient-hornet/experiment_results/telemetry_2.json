@@ -1,0 +1,101 @@
+{
+  "wall_clock_s": 5131.7,
+  "totals": {
+    "model_calls": 61.0,
+    "model_latency_s": 5238.7,
+    "input_tokens": 0.0,
+    "output_tokens": 0.0,
+    "reasoning_tokens": 0.0,
+    "tool_calls": 83.0,
+    "tool_latency_s": 5169.15,
+    "tool_errors": 3.0
+  },
+  "per_agent": {
+    "model": {
+      "model_calls": 10.0,
+      "model_latency_s": 281.95,
+      "input_tokens": 0.0,
+      "output_tokens": 0.0,
+      "reasoning_tokens": 0.0
+    },
+    "tools": {
+      "tool_calls": 20.0,
+      "tool_latency_s": 5062.93,
+      "tool_errors": 1.0
+    },
+    "topology-analysis-agent": {
+      "model_calls": 23.0,
+      "model_latency_s": 3676.32,
+      "input_tokens": 0.0,
+      "output_tokens": 0.0,
+      "reasoning_tokens": 0.0,
+      "tool_calls": 32.0,
+      "tool_latency_s": 11.27,
+      "tool_errors": 1.0
+    },
+    "extraction-planning-agent": {
+      "model_calls": 3.0,
+      "model_latency_s": 260.33,
+      "input_tokens": 0.0,
+      "output_tokens": 0.0,
+      "reasoning_tokens": 0.0,
+      "tool_calls": 4.0,
+      "tool_latency_s": 0.03
+    },
+    "durations-processing-times-agent": {
+      "model_calls": 18.0,
+      "model_latency_s": 808.64,
+      "input_tokens": 0.0,
+      "output_tokens": 0.0,
+      "reasoning_tokens": 0.0,
+      "tool_calls": 20.0,
+      "tool_latency_s": 93.16,
+      "tool_errors": 1.0
+    },
+    "inter-arrival-times-agent": {
+      "model_calls": 7.0,
+      "model_latency_s": 211.46,
+      "input_tokens": 0.0,
+      "output_tokens": 0.0,
+      "reasoning_tokens": 0.0,
+      "tool_calls": 7.0,
+      "tool_latency_s": 1.76
+    }
+  },
+  "peak_input_tokens": {
+    "model": 0,
+    "topology-analysis-agent": 0,
+    "extraction-planning-agent": 0,
+    "durations-processing-times-agent": 0,
+    "inter-arrival-times-agent": 0
+  },
+  "event_counts": {
+    "thrash_guard": 4
+  },
+  "events": [
+    {
+      "ts": "2026-10-14T20:44:52.670930+00:00",
+      "kind": "thrash_guard",
+      "tool": "log_decision",
+      "repeats": 3
+    },
+    {
+      "ts": "2026-10-14T20:44:52.671685+00:00",
+      "kind": "thrash_guard",
+      "tool": "log_decision",
+      "repeats": 4
+    },
+    {
+      "ts": "2026-10-14T20:44:52.672612+00:00",
+      "kind": "thrash_guard",
+      "tool": "log_decision",
+      "repeats": 5
+    },
+    {
+      "ts": "2026-10-14T20:44:52.673327+00:00",
+      "kind": "thrash_guard",
+      "tool": "log_decision",
+      "repeats": 6
+    }
+  ]
+}

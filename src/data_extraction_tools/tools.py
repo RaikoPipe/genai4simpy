@@ -287,6 +287,202 @@ def make_inspect_column(df: pd.DataFrame):
 # -----------------------------------------------------------------------------
 
 
+_DEFAULT_DISTRIBUTIONS = ["norm", "expon", "lognorm", "gamma", "weibull_min", "uniform", "triang"]
+
+
+def _bootstrap_ks_pvalue(dist, params, d: np.ndarray, ks_obs: float, n_boot: int, seed: int = 0) -> float | None:
+    """Parametric-bootstrap KS p-value (Lilliefors-type correction).
+
+    The plain KS p-value is anti-conservative when the parameters were estimated
+    from the same sample. Here the null distribution of the KS statistic is
+    simulated by drawing ``n_boot`` samples from the fitted distribution,
+    re-fitting each one and recomputing the statistic.
+    """
+    from scipy import stats as sp_stats
+
+    if n_boot <= 0:
+        return None
+    rng = np.random.default_rng(seed)
+    n = len(d)
+    exceed = 0
+    done = 0
+    for _ in range(n_boot):
+        try:
+            sample = dist.rvs(*params, size=n, random_state=rng)
+            p_b = dist.fit(sample)
+            ks_b = sp_stats.kstest(sample, dist.cdf, args=p_b).statistic
+        except Exception:
+            continue
+        done += 1
+        exceed += ks_b >= ks_obs
+    if done == 0:
+        return None
+    return (1 + exceed) / (done + 1)
+
+
+def _empirical_fallback(d: pd.Series) -> dict[str, Any]:
+    """Bounded, moment-preserving recommendation that needs no parametric fit.
+
+    Returns the empirical quantile table (inverse-CDF sampling) when there are
+    enough points, else triangular(min, median, max), else a constant.
+    """
+    mean = float(d.mean())
+    if len(d) >= 10 and d.nunique() > 2:
+        return _empirical_quantiles_entry(d, note=(
+            "Bounded empirical fallback: inverse-CDF sampling from the empirical "
+            "quantile table (keeps observed mean, spread and range)."))
+    lo, mid, hi = float(d.min()), float(d.median()), float(d.max())
+    if hi > lo:
+        c = min(max((mid - lo) / (hi - lo), 0.0), 1.0)
+        return {
+            "distribution": "triang",
+            "params": {"c": round(c, 6), "loc": round(lo, 6), "scale": round(hi - lo, 6)},
+            "theoretical_mean": round((lo + mid + hi) / 3.0, 6),
+            "valid": True,
+            "fallback": True,
+            "note": "Bounded empirical fallback: triangular(min, median, max) — too few points for quantiles.",
+        }
+    return {
+        "distribution": "constant",
+        "params": {"value": round(mean, 6)},
+        "theoretical_mean": round(mean, 6),
+        "theoretical_std": 0.0,
+        "valid": True,
+        "fallback": True,
+        "note": "Zero spread in sample; constant.",
+    }
+
+
+def _empirical_quantiles_entry(d: pd.Series, note: str) -> dict[str, Any]:
+    arr = d.to_numpy(dtype=float)
+    probs = list(range(0, 101, 5))
+    return {
+        "distribution": "empirical_quantiles",
+        "params": {},
+        "quantiles": [round(float(np.percentile(arr, p)), 6) for p in probs],
+        "quantile_probs": [p / 100 for p in probs],
+        "theoretical_mean": round(float(arr.mean()), 6),
+        "theoretical_std": round(float(arr.std(ddof=1)), 6) if len(arr) > 1 else 0.0,
+        "p_value": None,
+        "ks_pass": None,
+        "valid": True,
+        "fallback": True,
+        "note": note + (" Sample with np.interp(rng.uniform(), quantile_probs, quantiles). "
+                        "No goodness-of-fit test is reported: the table is the sample's own "
+                        "CDF, so any in-sample test would be trivially passed."),
+    }
+
+
+def fit_numeric_series(
+        data: pd.Series,
+        label: str = "overall",
+        distributions: list[str] | None = None,
+        min_value: float | None = 0.0,
+        rank_by: str = "aic",
+        moment_tol: float = 0.15,
+        std_tol: float = 0.25,
+        tail_factor: float = 2.0,
+        min_parametric_n: int = 30,
+        n_boot: int = 99,
+) -> dict[str, Any]:
+    """Fit candidate distributions to one numeric sample and recommend one.
+
+    Shared by ``fit_distribution`` (column based) and ``fit_activity_durations``
+    (activity-instance based). See ``fit_distribution`` for the gate semantics.
+    """
+    from scipy import stats as sp_stats
+
+    distributions = distributions or _DEFAULT_DISTRIBUTIONS
+    d = pd.to_numeric(data, errors="coerce").dropna()
+    if min_value is not None:
+        d = d[d > min_value]
+    n = len(d)
+    if n == 0:
+        return {"label": label, "n_samples": 0, "error": "No data points after filtering."}
+
+    emp_mean, emp_std = float(d.mean()), float(d.std())
+    emp_min, emp_max = float(d.min()), float(d.max())
+    ks_reliable = n >= min_parametric_n
+    d_arr = d.to_numpy(dtype=float)
+
+    fits: list[dict[str, Any]] = []
+    for dist_name in (distributions if n >= 10 else []):
+        try:
+            dist = getattr(sp_stats, dist_name)
+            params = dist.fit(d_arr)
+            ks_stat = float(sp_stats.kstest(d_arr, dist.cdf, args=params).statistic)
+            log_lik = float(dist.logpdf(d_arr, *params).sum())
+            k = len(params)
+            shape_names = [s.strip() for s in dist.shapes.split(",")] if dist.shapes else []
+            fit = {
+                "distribution": dist_name,
+                "params": {nm: round(float(v), 6) for nm, v in zip(shape_names + ["loc", "scale"], params)},
+                "ks_statistic": round(ks_stat, 6),
+                "aic": round(2 * k - 2 * log_lik, 2),
+                "bic": round(k * np.log(n) - 2 * log_lik, 2),
+            }
+            m, v = dist.stats(*params, moments="mv")
+            th_mean, th_std = float(m), float(np.sqrt(v)) if np.isfinite(v) and v >= 0 else float("nan")
+            mean_rel_err = abs(th_mean - emp_mean) / (abs(emp_mean) + 1e-12) if np.isfinite(th_mean) else float("inf")
+            std_rel_err = abs(th_std - emp_std) / (emp_std + 1e-12) if np.isfinite(th_std) else float("inf")
+            try:
+                p99 = float(dist.ppf(0.99, *params))
+                tail_ratio = p99 / (emp_max + 1e-12) if np.isfinite(p99) else float("inf")
+            except Exception:
+                tail_ratio = float("inf")
+            data_span = emp_max - emp_min + 1e-12
+            degenerate = any(abs(float(p)) > 1e4 * data_span for p in params if np.isfinite(float(p)))
+            moment_pass = (np.isfinite(th_mean) and np.isfinite(th_std)
+                           and mean_rel_err <= moment_tol and std_rel_err <= std_tol)
+            tail_pass = np.isfinite(tail_ratio) and tail_ratio <= tail_factor
+            # Bootstrap only candidates that could be selected; it is the expensive step.
+            p_value = (_bootstrap_ks_pvalue(dist, params, d_arr, ks_stat, n_boot)
+                       if ks_reliable and moment_pass and tail_pass and not degenerate else None)
+            ks_pass = None if p_value is None else bool(p_value > 0.05)
+            fit.update(
+                p_value=None if p_value is None else round(float(p_value), 4),
+                p_value_method=f"parametric bootstrap (B={n_boot})" if p_value is not None else "not tested",
+                ks_pass=ks_pass,
+                theoretical_mean=round(th_mean, 6) if np.isfinite(th_mean) else None,
+                theoretical_std=round(th_std, 6) if np.isfinite(th_std) else None,
+                mean_rel_err=round(mean_rel_err, 4) if np.isfinite(mean_rel_err) else None,
+                std_rel_err=round(std_rel_err, 4) if np.isfinite(std_rel_err) else None,
+                tail_ratio=round(tail_ratio, 4) if np.isfinite(tail_ratio) else None,
+                degenerate=bool(degenerate),
+                valid=bool(moment_pass and tail_pass and not degenerate and ks_reliable and ks_pass),
+            )
+            fits.append(fit)
+        except Exception:
+            continue
+
+    fits.sort(key=lambda x: (not x["valid"], x[rank_by] if rank_by in x else 0, len(x["params"])))
+    if fits and fits[0]["valid"]:
+        best_fit = fits[0]
+        reason = f"Best valid parametric fit by {rank_by} (moment/tail gate + bootstrap KS passed)."
+    else:
+        best_fit = _empirical_fallback(d)
+        reason = (f"N={n} < {min_parametric_n}: parametric fits not trusted; " if not ks_reliable else
+                  "No parametric fit passed the moment/tail gate and the bootstrap KS test; ") + \
+                 f"using {best_fit['distribution']} fallback."
+
+    return {
+        "label": label,
+        "n_samples": n,
+        "empirical_stats": {
+            "mean": round(emp_mean, 4), "std": round(emp_std, 4) if n > 1 else 0.0,
+            "cv": round(emp_std / emp_mean, 4) if emp_mean and n > 1 else None,
+            "min": round(emp_min, 4), "median": round(float(d.median()), 4), "max": round(emp_max, 4),
+        },
+        "recommendation_reason": reason,
+        "best_fit": best_fit,
+        # Compact view of the alternatives (full parameters only for the best one).
+        "alternatives": [
+            {k: f.get(k) for k in ("distribution", "aic", "p_value", "mean_rel_err", "std_rel_err", "valid")}
+            for f in fits[:4]
+        ],
+    }
+
+
 def make_fit_distribution(df: pd.DataFrame):
     """Return a tool that fits statistical distributions to a numeric column."""
 
@@ -298,457 +494,56 @@ def make_fit_distribution(df: pd.DataFrame):
             filter_values: list[str] | None = None,
             min_value: float | None = 0.0,
             distributions: list[str] | None = None,
-            rank_by: Literal["aic", "bic", "sum_log_likelihood"] = "aic",
-            moment_tol: float = 0.15,
-            std_tol: float = 0.25,
-            tail_factor: float = 2.0,
+            rank_by: Literal["aic", "bic"] = "aic",
             min_parametric_n: int = 30,
     ) -> dict[str, Any]:
         """
         Fit probability distributions to a numeric column for simulation input.
 
-        Tests a set of common distributions and returns ranked fits with their
-        parameters, goodness-of-fit statistics (KS test, AIC, BIC), empirical
-        summary stats, theoretical moments, and a validity verdict. Essential for
-        parameterising stochastic simulation models.
+        Prefer ``fit_activity_durations`` for activity service times — it works on
+        the confirmed activity instances and cannot mix up lifecycle rows.
 
-        A fit is marked ``"valid": True`` only when its theoretical moments are
-        finite and agree with the data (mean within ``moment_tol``, std within
-        ``std_tol``), its upper tail does not fabricate values far beyond the
-        observed maximum (p99 <= ``tail_factor`` * empirical max), and its
-        parameters are not numerically degenerate (no parameter magnitude
-        exceeding 1e4 × data range). Invalid fits are retained in ``all_fits``
-        for transparency but are never selected as ``best_fit``.
-
-        When every parametric distribution fails the KS test (p-value <= 0.05),
-        a non-parametric KDE entry (``"distribution": "kde"``) is appended to
-        ``all_fits`` and participates in ranking. The KDE entry includes a
-        21-point quantile table (keys ``"0"`` ... ``"100"`` at 5 % steps) for
-        inverse-CDF sampling in simulation code without needing the raw data.
-
-        For ``n < min_parametric_n`` no parametric distribution is recommended:
-        ``best_fit`` is a bounded fallback (triangular from p5/median/p95, or an
-        empirical-mean constant) and every parametric fit is flagged
-        ``advisory_only`` with ``ks_reliable=False``.
+        A parametric fit is recommended only when ALL hold: theoretical mean within
+        15 % and std within 25 % of the empirical moments, p99 <= 2x the observed
+        max, non-degenerate parameters, N >= ``min_parametric_n``, and the
+        parametric-bootstrap KS test (parameters re-estimated in every bootstrap
+        sample, i.e. Lilliefors-corrected) does not reject at 5 %. Otherwise the
+        recommendation is a bounded empirical fallback: the empirical quantile
+        table (inverse-CDF sampling), or triangular(min, median, max) for N < 10.
 
         Args:
             column: Numeric column to fit distributions to.
-            group_by: Optional column name to produce per-group fits
-                      (e.g. fit processing times separately per resource).
+            group_by: Optional column name to produce per-group fits.
             filter_col: Column to filter rows on before fitting.
-            filter_values: Exact values to keep in filter_col. Supply as a
-                           list even for a single value, e.g. ["D"].
-            min_value: Exclude values at or below this threshold before
-                       fitting (default 0.0 removes non-positive durations).
-                       Pass None to disable filtering entirely.
+            filter_values: Exact values to keep in filter_col, as a list.
+            min_value: Exclude values at or below this threshold (default 0.0).
+                       Pass None to disable filtering.
             distributions: scipy distribution names to test. Defaults to
-                           ['norm', 'expon', 'lognorm', 'gamma',
-                            'weibull_min', 'uniform', 'triang'].
-            rank_by: Criterion used to select among VALID fits.
-                     'aic' — penalises number of parameters lightly (default).
-                     'bic' — penalises number of parameters more strongly.
-                     'sum_log_likelihood' — highest raw likelihood (no penalty;
-                     discouraged: rewards degenerate near-delta fits).
-            moment_tol: Max allowed |theoretical_mean - empirical_mean| /
-                        |empirical_mean| for a fit to be valid (default 0.15).
-            std_tol: Max allowed relative deviation of theoretical std from
-                     empirical std for a fit to be valid (default 0.25).
-            tail_factor: Max allowed theoretical p99 / empirical max for a fit
-                         to be valid (default 2.0; blocks fabricated heavy tails).
-            min_parametric_n: Minimum sample size to recommend a parametric fit
-                              (default 30). Below this, return a bounded fallback.
+                           norm, expon, lognorm, gamma, weibull_min, uniform, triang.
+            rank_by: 'aic' (default) or 'bic' among valid fits.
+            min_parametric_n: Minimum sample size for a parametric recommendation.
         """
-        from scipy import stats as sp_stats
-
         _df = df.loc[:, df.columns.str.strip() != ""]
         _df = _df.loc[:, ~_df.columns.str.contains("^Unnamed")]
-
         if column not in _df.columns:
-            return {
-                "error": f"Column '{column}' not found.",
-                "available_columns": list(_df.columns),
-            }
-
-        if distributions is None:
-            distributions = [
-                "norm", "expon", "lognorm", "gamma",
-                "weibull_min", "uniform", "triang",
-            ]
-
-        # Apply row-level filters
-        _df = _df.copy()
+            return {"error": f"Column '{column}' not found.", "available_columns": list(_df.columns)}
         if filter_col and filter_values:
             if filter_col not in _df.columns:
                 return {"error": f"filter_col '{filter_col}' not found."}
             _df = _df[_df[filter_col].isin(filter_values)]
-
-        # ------------------------------------------------------------------
-        # Helpers (dataset-agnostic)
-        # ------------------------------------------------------------------
-        def _empirical_fallback(d: pd.Series) -> dict[str, Any]:
-            """Bounded, moment-preserving recommendation that needs no fit.
-
-            Uses robust percentile bounds (p5, median, p95) clamped to the
-            observed range, so that isolated outliers cannot drag the
-            triangle far from the data mass.  Falls back to an empirical-mean
-            constant when there is no spread.
-            """
-            mean = float(d.mean())
-            p05, mid, p95 = (float(np.percentile(d, 5)),
-                             float(d.median()),
-                             float(np.percentile(d, 95)))
-            # Clamp to observed range (never extrapolate beyond data).
-            lo = max(p05, float(d.min()))
-            hi = min(p95, float(d.max()))
-            # Ensure lo < mid < hi after clamping; widen minimally if
-            # percentiles collapse (very small or concentrated samples).
-            if lo >= mid:
-                lo = float(d.min())
-            if hi <= mid:
-                hi = float(d.max())
-            if hi > lo:
-                c = (mid - lo) / (hi - lo)
-                c = min(max(c, 0.0), 1.0)
-                return {
-                    "distribution": "triangular_empirical",
-                    "params": {"loc": round(lo, 6),
-                               "scale": round(hi - lo, 6),
-                               "c": round(c, 6)},
-                    "theoretical_mean": round((lo + mid + hi) / 3.0, 6),
-                    "theoretical_std": None,
-                    "valid": True,
-                    "fallback": True,
-                    "note": ("Bounded empirical fallback: "
-                             "triangular(p5, median, p95) clamped to "
-                             "observed range."),
-                }
-            return {
-                "distribution": "constant_empirical_mean",
-                "params": {"value": round(mean, 6)},
-                "theoretical_mean": round(mean, 6),
-                "theoretical_std": 0.0,
-                "valid": True,
-                "fallback": True,
-                "note": "Zero spread in sample; empirical-mean constant.",
-            }
-
-        def _annotate_moments(dist, params, fit, emp_mean, emp_std,
-                              emp_min, emp_max, ks_reliable):
-            """Attach theoretical moments, relative errors, and validity verdict."""
-            try:
-                m, v = dist.stats(*params, moments="mv")
-                th_mean = float(m)
-                th_std = float(np.sqrt(v)) if np.isfinite(v) and v >= 0 else float("nan")
-            except Exception:
-                th_mean = float("nan")
-                th_std = float("nan")
-
-            finite = np.isfinite(th_mean) and np.isfinite(th_std)
-            mean_rel_err = (abs(th_mean - emp_mean) / (abs(emp_mean) + 1e-12)
-                            if np.isfinite(th_mean) else float("inf"))
-            std_rel_err = (abs(th_std - emp_std) / (emp_std + 1e-12)
-                           if np.isfinite(th_std) else float("inf"))
-
-            try:
-                p99 = float(dist.ppf(0.99, *params))
-                tail_ratio = p99 / (emp_max + 1e-12) if np.isfinite(p99) else float("inf")
-            except Exception:
-                tail_ratio = float("inf")
-
-            moment_pass = (finite and mean_rel_err <= moment_tol
-                           and std_rel_err <= std_tol)
-            tail_pass = np.isfinite(tail_ratio) and tail_ratio <= tail_factor
-
-            # ---- Degeneracy guard ----
-            # Flag fits whose parameters are absurdly far from the data
-            # range.  Catches e.g. lognorm(s≈0, loc≈−1.6e6) which
-            # technically matches moments but is numerically fragile,
-            # uninterpretable, and unreproducible across platforms.
-            data_span = emp_max - emp_min + 1e-12
-            degenerate = any(
-                abs(float(v)) > 1e4 * data_span
-                for v in params
-                if np.isfinite(float(v))
-            )
-            fit["degenerate"] = bool(degenerate)
-
-            fit["theoretical_mean"] = (round(th_mean, 6)
-                                       if np.isfinite(th_mean) else None)
-            fit["theoretical_std"] = (round(th_std, 6)
-                                      if np.isfinite(th_std) else None)
-            fit["mean_rel_err"] = (round(mean_rel_err, 4)
-                                   if np.isfinite(mean_rel_err) else None)
-            fit["std_rel_err"] = (round(std_rel_err, 4)
-                                  if np.isfinite(std_rel_err) else None)
-            fit["tail_ratio"] = (round(tail_ratio, 4)
-                                 if np.isfinite(tail_ratio) else None)
-            fit["ks_reliable"] = bool(ks_reliable)
-            # KS-pass counts toward validity only when the test is reliable.
-            ks_ok = fit["ks_pass"] if ks_reliable else True
-            fit["valid"] = bool(moment_pass and tail_pass and ks_ok
-                                and not degenerate)
-            fit["advisory_only"] = not ks_reliable
-            return fit
-
-        def _fit_series(data: pd.Series, label: str = "overall") -> dict[str, Any]:
-            d = pd.to_numeric(data, errors="coerce").dropna()
-            if min_value is not None:
-                d = d[d > min_value]
-            n = len(d)
-            if n < 10:
-                return {
-                    "label": label,
-                    "error": f"Too few data points after filtering ({n}); need at least 10.",
-                }
-
-            emp_mean = float(d.mean())
-            emp_std = float(d.std())
-            emp_min = float(d.min())
-            emp_max = float(d.max())
-            ks_reliable = n >= min_parametric_n
-
-            fits: list[dict[str, Any]] = []
-            for dist_name in distributions:
-                try:
-                    dist = getattr(sp_stats, dist_name)
-                    params = dist.fit(d)
-                    ks_stat, p_value = sp_stats.kstest(d, dist_name, args=params)
-                    log_lik = float(dist.logpdf(d, *params).sum())
-                    k = len(params)
-                    aic = 2 * k - 2 * log_lik
-                    bic = k * np.log(n) - 2 * log_lik
-
-                    shape_names = (
-                        [s.strip() for s in dist.shapes.split(",")]
-                        if dist.shapes
-                        else []
-                    )
-                    param_names = shape_names + ["loc", "scale"]
-                    param_dict = {
-                        name: round(float(v), 6)
-                        for name, v in zip(param_names, params)
-                    }
-
-                    fit = {
-                        "distribution": dist_name,
-                        "params": param_dict,
-                        "ks_statistic": round(float(ks_stat), 6),
-                        "p_value": round(float(p_value), 6),
-                        "ks_pass": bool(p_value > 0.05),
-                        "sum_log_likelihood": round(log_lik, 4),
-                        "aic": round(aic, 2),
-                        "bic": round(bic, 2),
-                    }
-                    _annotate_moments(dist, params, fit, emp_mean, emp_std,
-                                      emp_min, emp_max, ks_reliable)
-                    fits.append(fit)
-                except Exception:
-                    continue
-
-            if not fits:
-                return {"label": label, "error": "No distribution could be fitted."}
-
-            # KDE fallback: triggered only when every parametric fit fails the KS test
-            if all(not f["ks_pass"] for f in fits):
-                try:
-                    from scipy.stats import gaussian_kde
-
-                    d_arr = d.to_numpy()
-                    kde = gaussian_kde(d_arr)  # Scott's rule bandwidth
-
-                    densities = kde.evaluate(d_arr)
-                    densities = np.maximum(densities, np.finfo(float).tiny)
-                    log_lik_kde = float(np.log(densities).sum())
-
-                    k_kde = 1
-                    aic_kde = 2 * k_kde - 2 * log_lik_kde
-                    bic_kde = k_kde * np.log(n) - 2 * log_lik_kde
-
-                    kde_samples = kde.resample(n, seed=0)[0]
-                    ks_stat_kde, p_value_kde = sp_stats.ks_2samp(d_arr, kde_samples)
-
-                    quantile_probs = list(range(0, 101, 5))
-                    quantile_vals = {
-                        str(p): round(float(np.percentile(d_arr, p)), 6)
-                        for p in quantile_probs
-                    }
-                    # KDE is empirical-quantile based: moments track the data, so
-                    # it is valid by construction (subject to KS reliability).
-                    kde_mean = float(np.mean(d_arr))
-                    kde_std = float(np.std(d_arr, ddof=1)) if n > 1 else 0.0
-
-                    fits.append({
-                        "distribution": "kde",
-                        "params": {
-                            "bandwidth": round(float(kde.factor), 6),
-                            "bandwidth_method": "scott",
-                        },
-                        "quantiles": quantile_vals,
-                        "ks_statistic": round(float(ks_stat_kde), 6),
-                        "p_value": round(float(p_value_kde), 6),
-                        "ks_pass": bool(p_value_kde > 0.05),
-                        "sum_log_likelihood": round(log_lik_kde, 4),
-                        "aic": round(aic_kde, 2),
-                        "bic": round(bic_kde, 2),
-                        "theoretical_mean": round(kde_mean, 6),
-                        "theoretical_std": round(kde_std, 6),
-                        "mean_rel_err": 0.0,
-                        "std_rel_err": 0.0,
-                        "tail_ratio": 1.0,
-                        "ks_reliable": bool(ks_reliable),
-                        "valid": True,
-                        "degenerate": False,
-                        "advisory_only": not ks_reliable,
-                        "note": (
-                            "Non-parametric KDE fallback (all parametric fits failed KS test). "
-                            "Sample via: np.interp(np.random.uniform(), "
-                            "np.linspace(0, 1, len(quantiles)), list(quantiles.values()))"
-                        ),
-                    })
-                except Exception:
-                    pass  # KDE failure is non-fatal; parametric results still returned
-
-            # Rank: valid fits first, then by the chosen (penalised) criterion,
-            # then by parameter count (parsimony tiebreaker — prefers e.g. norm
-            # over a degenerate-but-not-caught lognorm at equal AIC).
-            reverse = rank_by == "sum_log_likelihood"
-            fits.sort(
-                key=lambda x: (
-                    not x.get("valid", False),
-                    -x[rank_by] if reverse else x[rank_by],
-                    len(x.get("params", {})),
-                )
-            )
-
-            # Select best_fit subject to the small-N and validity policies.
-            fallback = _empirical_fallback(d)
-            if not ks_reliable:
-                # Too few points to trust any parametric family.
-                best_fit = fallback
-                recommendation_reason = (
-                    f"N={n} < min_parametric_n={min_parametric_n}: parametric fits "
-                    "are advisory only; using bounded empirical fallback."
-                )
-            elif fits and fits[0].get("valid", False):
-                best_fit = fits[0]
-                recommendation_reason = "Best valid parametric/KDE fit by " + rank_by + "."
-            else:
-                best_fit = fallback
-                recommendation_reason = (
-                    "No parametric or KDE fit passed the moment/tail validity gate; "
-                    "using bounded empirical fallback."
-                )
-
-            return {
-                "label": label,
-                "n_samples": n,
-                "ranked_by": rank_by,
-                "ks_reliable": bool(ks_reliable),
-                "validity_gate": {
-                    "moment_tol": moment_tol,
-                    "std_tol": std_tol,
-                    "tail_factor": tail_factor,
-                    "min_parametric_n": min_parametric_n,
-                },
-                "empirical_stats": {
-                    "mean": round(emp_mean, 4),
-                    "std": round(emp_std, 4),
-                    "min": round(float(d.min()), 4),
-                    "max": round(emp_max, 4),
-                    "median": round(float(d.median()), 4),
-                    "skewness": round(float(d.skew()), 4),
-                    "kurtosis": round(float(d.kurtosis()), 4),
-                },
-                "recommendation_reason": recommendation_reason,
-                "best_fit": best_fit,
-                "all_fits": fits,
-            }
-
+        kw = dict(distributions=distributions, min_value=min_value, rank_by=rank_by,
+                  min_parametric_n=min_parametric_n)
         if group_by:
             if group_by not in _df.columns:
                 return {"error": f"group_by column '{group_by}' not found."}
             return {
-                "column": column,
-                "group_by": group_by,
-                "filter": {"col": filter_col, "values": filter_values},
-                "results": {
-                    str(name): _fit_series(grp[column], label=str(name))
-                    for name, grp in _df.groupby(group_by)
-                },
+                "column": column, "group_by": group_by,
+                "results": {str(name): fit_numeric_series(grp[column], label=str(name), **kw)
+                            for name, grp in _df.groupby(group_by)},
             }
-
-        return {
-            "column": column,
-            "filter": {"col": filter_col, "values": filter_values},
-            "result": _fit_series(_df[column]),
-        }
+        return {"column": column, "result": fit_numeric_series(_df[column], **kw)}
 
     return fit_distribution
-
-
-def make_export_kde_quantiles(output_dir: str = "output/generated_reports/kde_quantiles"):
-    """Return a tool that persists an empirical KDE quantile table to a CSV file.
-
-    Call this immediately after ``fit_distribution`` returns a result whose
-    ``best_fit["distribution"] == "kde"``.  The quantile dict is taken verbatim
-    from the ``"quantiles"`` key of that KDE fit entry.
-
-    One CSV file is written per (param_name, group_label) pair so each
-    parameter's quantile table is self-contained and directly referenceable
-    by the coding and evaluator agents.
-    """
-
-    _output_dir = os.path.join(os.getcwd(), output_dir)
-
-    @tool(description=(
-        "Persist an empirical KDE quantile table to a CSV file on disk. "
-        "Call this whenever fit_distribution() returns a best_fit with "
-        "distribution == 'kde'. The returned file path must be included in "
-        "the distribution fitting report so downstream agents (evaluator, "
-        "coding agent) can load the table for np.interp-based sampling. "
-        f"Output directory: {_output_dir}"
-    ))
-    def export_kde_quantiles(
-        param_name: str,
-        group_label: str,
-        quantiles: dict,
-    ) -> str:
-        """Write the KDE empirical quantile table for one parameter/group to CSV.
-
-        The CSV has columns: param_name, group, percentile, value — one row
-        per percentile point (21 rows for the default 0 %–100 % at 5 % steps).
-
-        Args:
-            param_name: Human-readable parameter name used in the filename and
-                        the ``param_name`` CSV column. Example:
-                        ``"processing_time_machine_A"``.
-            group_label: Group key from the fit result's ``"label"`` field, or
-                         ``"overall"`` for non-grouped fits.
-            quantiles: The ``"quantiles"`` dict from the ``"kde"`` best_fit
-                       entry — keys are percentile strings (``"0"`` … ``"100"``
-                       at 5 % steps), values are floats.
-        """
-        os.makedirs(_output_dir, exist_ok=True)
-
-        safe_param = re.sub(r"[^\w\-]", "_", str(param_name))
-        safe_group = re.sub(r"[^\w\-]", "_", str(group_label))
-        filename = f"{safe_param}__{safe_group}.csv"
-        filepath = os.path.join(_output_dir, filename)
-
-        rows = [
-            {
-                "param_name": param_name,
-                "group": group_label,
-                "percentile": int(k),
-                "value": float(v),
-            }
-            for k, v in sorted(quantiles.items(), key=lambda x: int(x[0]))
-        ]
-        pd.DataFrame(rows).to_csv(filepath, index=False)
-
-        return f"KDE quantile table written to {filepath}"
-
-    return export_kde_quantiles
 
 
 def make_get_unique_values(df: pd.DataFrame):
@@ -908,6 +703,33 @@ def make_compute_duration(df: pd.DataFrame):
 # -----------------------------------------------------------------------------
 
 
+def _group_stats(vals: pd.Series, method: str, threshold: float, remove: bool) -> dict[str, Any]:
+    """Descriptive stats for one group; outliers are flagged and removed only on request."""
+    mask, lower, upper = _detect_outliers(vals, method, threshold)
+    used = vals[~mask] if remove and (~mask).any() else vals
+    n_out = int(mask.sum())
+    return {
+        "count": len(vals),
+        "count_used": len(used),
+        "mean": round(float(used.mean()), 4),
+        "std": round(float(used.std()), 4) if len(used) > 1 else 0.0,
+        "cv": round(float(used.std() / used.mean()), 4) if len(used) > 1 and used.mean() else None,
+        "min": round(float(used.min()), 4),
+        "max": round(float(used.max()), 4),
+        "median": round(float(used.median()), 4),
+        "outliers": {
+            "count": n_out,
+            "rate": round(n_out / len(vals), 4) if len(vals) else 0.0,
+            "removed": bool(remove and n_out > 0),
+            "method": method,
+            "threshold": threshold,
+            "lower_bound": round(lower, 4) if lower is not None else None,
+            "upper_bound": round(upper, 4) if upper is not None else None,
+            "mean_if_removed": round(float(vals[~mask].mean()), 4) if n_out and (~mask).any() else None,
+        },
+    }
+
+
 def make_extract_processing_times(df: pd.DataFrame):
     """Return a tool that computes grouped processing time statistics."""
 
@@ -919,117 +741,105 @@ def make_extract_processing_times(df: pd.DataFrame):
         time_type_filter: list[str] | None = None,
         min_duration: float = 0.0,
         outlier_method: Literal["none", "iqr", "zscore"] = "iqr",
-        outlier_threshold: float = 1.5,
+        outlier_threshold: float = 3.0,
+        remove_outliers: bool = False,
+        data_quality_reason: str | None = None,
     ) -> dict[str, Any]:
         """
         Compute processing time statistics grouped by a resource or activity column.
 
-        Optionally filters rows by a time-type code column (e.g. keep only
-        direct-work records before computing machine cycle times). Only
-        positive durations above min_duration are included.
-
-        Outlier detection is applied per group before computing statistics so
-        that extreme values do not distort means and standard deviations.
-        Detected outliers are reported but not silently dropped — the returned
-        statistics always reflect the clean (outlier-removed) sample.
+        Outliers are DETECTED and reported per group (Tukey far fences, k=3 by
+        default) but NOT removed: long service times are real variability that the
+        simulation must reproduce. Set ``remove_outliers=True`` only for a
+        documented data-quality defect (e.g. a sensor glitch producing 0.03 s), and
+        state it in ``data_quality_reason``; the report must cite that reason.
 
         Args:
             duration_col: Numeric column containing duration values.
-            group_by_col: Column to group statistics by (typically the resource
-                          or machine column).
-            time_type_col: Column that encodes time categories (e.g. setup vs.
-                           direct work). Supply together with time_type_filter.
-            time_type_filter: List of time-type values to keep. Rows with other
-                              values are excluded before computing statistics.
-                              Example: ["D"] to keep only direct-work records.
-            min_duration: Exclude durations at or below this value.
-                          Default 0.0 removes non-positive entries.
-            outlier_method: Method used to detect outliers within each group.
-                            'iqr'    — Tukey fences (Q1 - k*IQR, Q3 + k*IQR).
-                            'zscore' — values whose |z-score| exceeds the threshold.
-                            'none'   — no outlier detection.
-                            Default 'iqr'.
-            outlier_threshold: Multiplier k for IQR (default 1.5, use 3.0 for
-                               far-fence / less aggressive removal) or the
-                               z-score cutoff when method='zscore'.
+            group_by_col: Column to group statistics by (resource or activity).
+            time_type_col: Column that encodes time categories (e.g. setup vs. work).
+            time_type_filter: List of time-type values to keep.
+            min_duration: Exclude durations at or below this value (default 0.0).
+            outlier_method: 'iqr' (default), 'zscore' or 'none' — detection only.
+            outlier_threshold: IQR multiplier k (default 3.0) or z cutoff.
+            remove_outliers: Remove the flagged values (requires data_quality_reason).
+            data_quality_reason: Why the flagged values are data errors, not variability.
         """
+        if remove_outliers and not data_quality_reason:
+            return {"error": "remove_outliers=True requires data_quality_reason (a documented data defect)."}
         _df = df.loc[:, df.columns.str.strip() != ""]
         _df = _df.loc[:, ~_df.columns.str.contains("^Unnamed")]
-
         for col in (duration_col, group_by_col):
             if col not in _df.columns:
-                return {
-                    "error": f"Column '{col}' not found.",
-                    "available_columns": list(_df.columns),
-                }
-
+                return {"error": f"Column '{col}' not found.", "available_columns": list(_df.columns)}
         if time_type_col and time_type_filter:
             if time_type_col not in _df.columns:
                 return {"error": f"time_type_col '{time_type_col}' not found."}
             _df = _df[_df[time_type_col].isin(time_type_filter)]
-
         _df = _df.copy()
         _df[duration_col] = pd.to_numeric(_df[duration_col], errors="coerce")
         _df = _df[_df[duration_col] > min_duration]
-
         if _df.empty:
-            return {
-                "error": "No records remain after filtering.",
-                "filter": {"time_type_col": time_type_col, "values": time_type_filter},
-            }
+            return {"error": "No records remain after filtering."}
 
-        stats_dict: dict[str, Any] = {}
-        all_clean_vals: list[pd.Series] = []
-
-        for grp_name, grp_series in _df.groupby(group_by_col)[duration_col]:
-            vals = grp_series.dropna()
-            mask, lower, upper = _detect_outliers(vals, outlier_method, outlier_threshold)
-            clean = vals[~mask]
-            if len(clean) == 0:
-                clean = vals  # fallback: keep all if every value is flagged
-            all_clean_vals.append(clean)
-            outlier_count = int(mask.sum())
-            stats_dict[grp_name] = {
-                "count": len(vals),
-                "count_clean": len(clean),
-                "mean": round(float(clean.mean()), 4),
-                "std": round(float(clean.std()), 4),
-                "min": round(float(clean.min()), 4),
-                "max": round(float(clean.max()), 4),
-                "median": round(float(clean.median()), 4),
-                "outliers": {
-                    "count": outlier_count,
-                    "rate": round(outlier_count / len(vals), 4) if len(vals) > 0 else 0.0,
-                    "method": outlier_method,
-                    "threshold": outlier_threshold,
-                    "lower_bound": round(lower, 4) if lower is not None else None,
-                    "upper_bound": round(upper, 4) if upper is not None else None,
-                },
-            }
-
-        combined_clean = pd.concat(all_clean_vals) if all_clean_vals else _df[duration_col]
-
+        stats_dict = {
+            str(g): _group_stats(s.dropna(), outlier_method, outlier_threshold, remove_outliers)
+            for g, s in _df.groupby(group_by_col)[duration_col]
+        }
         return {
             "group_by": group_by_col,
             "duration_column": duration_col,
             "filter": {"time_type_col": time_type_col, "values": time_type_filter},
-            "min_duration_threshold": min_duration,
-            "outlier_method": outlier_method,
-            "outlier_threshold": outlier_threshold,
+            "outliers_removed": remove_outliers,
+            "data_quality_reason": data_quality_reason,
             "total_records": len(_df),
-            "groups": len(stats_dict),
             "statistics": stats_dict,
-            "overall": {
-                "mean": round(float(combined_clean.mean()), 4),
-                "std": round(float(combined_clean.std()), 4),
-                "median": round(float(combined_clean.median()), 4),
-            },
         }
 
     return extract_processing_times
 
 
 # -----------------------------------------------------------------------------
+
+
+def _spec_dist(fit: dict[str, Any], source: str) -> dict[str, Any] | None:
+    """Convert a ``fit_numeric_series`` result into a spec Distribution dict."""
+    if "best_fit" not in fit:
+        return None
+    b = fit["best_fit"]
+    d = {"family": b["distribution"], "params": b.get("params", {}),
+         "mean": fit["empirical_stats"]["mean"], "n": fit["n_samples"], "source": source}
+    if b["distribution"] == "empirical_quantiles":
+        d.update(quantiles=b["quantiles"], quantile_probs=b["quantile_probs"])
+    return d
+
+
+def _arrival_distributions(iat_s: np.ndarray, reg: dict[str, Any]) -> dict[str, Any]:
+    """Spec-ready arrival distributions (seconds) for the single- and two-regime models."""
+    src = "extract_inter_arrival_times"
+    rec: dict[str, Any] = {"interarrival": _spec_dist(fit_numeric_series(pd.Series(iat_s), min_value=None), src)}
+    if reg.get("regime") == "two_regime":
+        thr = reg["threshold_s"]
+        burst, gap = iat_s[iat_s <= thr], iat_s[iat_s > thr]
+        rec["intra_burst_iat"] = _spec_dist(fit_numeric_series(pd.Series(burst), min_value=None), src)
+        rec["inter_burst_gap"] = _spec_dist(fit_numeric_series(pd.Series(gap), min_value=None), src)
+        sizes = pd.Series(_burst_sizes(iat_s, thr)).value_counts(normalize=True).sort_index()
+        rec["burst_size"] = {"family": "categorical", "values": [int(v) for v in sizes.index],
+                             "probs": [round(float(p), 4) for p in sizes.values],
+                             "mean": round(float(np.mean(_burst_sizes(iat_s, thr))), 3),
+                             "n": int(reg["burst_size"]["n_bursts"]), "source": src}
+    return rec
+
+
+def _burst_sizes(iat_s: np.ndarray, thr: float) -> list[int]:
+    sizes, cur = [], 1
+    for v in iat_s:
+        if v > thr:
+            sizes.append(cur)
+            cur = 1
+        else:
+            cur += 1
+    return sizes + [cur]
 
 
 def make_extract_inter_arrival_times(df: pd.DataFrame):
@@ -1040,105 +850,82 @@ def make_extract_inter_arrival_times(df: pd.DataFrame):
         case_col: str,
         timestamp_col: str,
         group_by_col: str | None = None,
-        unit: Literal["seconds", "minutes", "hours", "days"] = "minutes",
-        outlier_method: Literal["none", "iqr", "zscore"] = "iqr",
-        outlier_threshold: float = 1.5,
+        unit: Literal["seconds", "minutes", "hours", "days"] = "seconds",
+        exclude_case_ids: list[str] | None = None,
     ) -> dict[str, Any]:
         """
-        Compute inter-arrival times (IAT) — the time between consecutive case
-        arrivals — globally and optionally per resource or station.
+        Compute inter-arrival times (IAT) between consecutive case arrivals.
 
-        Arrival time per case is defined as the earliest timestamp for that
-        case, ensuring each case contributes exactly one arrival event.
-        Returns mean, std, min, max, median, and coefficient of variation (CV).
-        CV > 1 suggests a non-Poisson, bursty arrival process.
-
-        Outlier detection is applied to the IAT series before computing
-        statistics. Very long idle gaps (e.g. weekends, shutdowns) that would
-        otherwise inflate the mean and CV are detected and reported separately.
+        Arrival time per case = earliest ``timestamp_col`` value of that case (use
+        the request / release timestamp when the log has one). No gaps are removed:
+        the long gaps between bursts ARE part of the arrival process, and removing
+        them overstates the arrival rate. Instead the result contains a
+        two-regime decomposition (``regimes``): intra-burst IATs, inter-burst gaps
+        and the burst-size distribution. If the CV is high and the regimes are
+        well separated, model arrivals as bursts (batch of k cases, gap between
+        batches) — not as a single exponential with the overall mean.
 
         Args:
-            case_col: Column that uniquely identifies each case / work order.
+            case_col: Column that uniquely identifies each case.
             timestamp_col: Timestamp column used to determine arrival time.
-                           The minimum value per case is used as the arrival.
-            group_by_col: Optional column to compute per-group IATs in addition
-                          to the global figure (e.g. per resource or shift).
-            unit: Time unit for IAT values.
-                  One of 'seconds', 'minutes', 'hours', 'days'. Default 'minutes'.
-            outlier_method: Method used to detect outlier inter-arrival gaps.
-                            'iqr'    — Tukey fences (Q1 - k*IQR, Q3 + k*IQR).
-                            'zscore' — values whose |z-score| exceeds the threshold.
-                            'none'   — no outlier detection.
-                            Default 'iqr'.
-            outlier_threshold: Multiplier k for IQR (default 1.5) or the
-                               z-score cutoff when method='zscore'.
+            group_by_col: Optional column for per-group IATs (e.g. variant).
+            unit: Time unit of the output, default 'seconds'.
+            exclude_case_ids: Cases to leave out (e.g. left-censored cases already
+                              in the system at the window start, see detect_censoring).
         """
         _df = df.loc[:, df.columns.str.strip() != ""]
         _df = _df.loc[:, ~_df.columns.str.contains("^Unnamed")]
-
         for col in (case_col, timestamp_col):
             if col not in _df.columns:
-                return {
-                    "error": f"Column '{col}' not found.",
-                    "available_columns": list(_df.columns),
-                }
+                return {"error": f"Column '{col}' not found.", "available_columns": list(_df.columns)}
+        from src.data_extraction_tools.discovery import two_regime_iat
 
         divisors = {"seconds": 1, "minutes": 60, "hours": 3600, "days": 86400}
         _df = _df.copy()
-        _df[timestamp_col] = pd.to_datetime(_df[timestamp_col], errors="coerce")
+        if exclude_case_ids:
+            _df = _df[~_df[case_col].astype(str).isin([str(c) for c in exclude_case_ids])]
+        _df[timestamp_col] = pd.to_datetime(_df[timestamp_col], errors="coerce", format="ISO8601")
 
         def _iat_stats(arrivals: pd.Series, label: str = "global") -> dict[str, Any]:
-            arrivals = arrivals.sort_values().dropna()
-            iat = arrivals.diff().dt.total_seconds().dropna() / divisors[unit]
-            iat_pos = iat[iat > 0]
-            if len(iat_pos) < 2:
+            arrivals = arrivals.dropna().sort_values()
+            iat_s = arrivals.diff().dt.total_seconds().dropna().to_numpy()
+            if len(iat_s) < 2:
                 return {"label": label, "error": "Too few arrivals to compute IAT."}
-
-            mask, lower, upper = _detect_outliers(iat_pos, outlier_method, outlier_threshold)
-            clean_iat = iat_pos[~mask]
-            if len(clean_iat) < 2:
-                clean_iat = iat_pos  # fallback: keep all if too many flagged
-            outlier_count = int(mask.sum())
-
-            mean = float(clean_iat.mean())
-            std = float(clean_iat.std())
-            return {
+            iat = iat_s / divisors[unit]
+            mean, std = float(iat.mean()), float(iat.std(ddof=1))
+            out = {
                 "label": label,
                 "cases": int(len(arrivals)),
+                "span": round(float((arrivals.iloc[-1] - arrivals.iloc[0]).total_seconds()) / divisors[unit], 4),
                 "mean": round(mean, 4),
                 "std": round(std, 4),
-                "min": round(float(clean_iat.min()), 4),
-                "max": round(float(clean_iat.max()), 4),
-                "median": round(float(clean_iat.median()), 4),
                 "cv": round(std / mean, 4) if mean > 0 else None,
-                "outliers": {
-                    "count": outlier_count,
-                    "rate": round(outlier_count / len(iat_pos), 4) if len(iat_pos) > 0 else 0.0,
-                    "method": outlier_method,
-                    "threshold": outlier_threshold,
-                    "lower_bound": round(lower, 4) if lower is not None else None,
-                    "upper_bound": round(upper, 4) if upper is not None else None,
-                },
+                "min": round(float(iat.min()), 4),
+                "median": round(float(np.median(iat)), 4),
+                "max": round(float(iat.max()), 4),
+                "zero_iats": int((iat_s <= 0).sum()),
             }
+            try:
+                reg = two_regime_iat(iat_s)
+                if unit != "seconds":
+                    reg["unit_note"] = "regimes and recommended distributions are in seconds"
+                out["regimes"] = reg
+                out["recommended"] = _arrival_distributions(iat_s, reg)
+            except Exception as exc:  # decomposition is advisory
+                out["regimes"] = {"error": f"{type(exc).__name__}: {exc}"}
+            return out
 
-        # Global: first arrival per case
-        case_arrivals = _df.groupby(case_col)[timestamp_col].min()
         result: dict[str, Any] = {
             "unit": unit,
-            "outlier_method": outlier_method,
-            "outlier_threshold": outlier_threshold,
-            "global": _iat_stats(case_arrivals),
+            "global": _iat_stats(_df.groupby(case_col)[timestamp_col].min()),
         }
-
         if group_by_col:
             if group_by_col not in _df.columns:
                 return {"error": f"group_by_col '{group_by_col}' not found."}
-            per_group: dict[str, Any] = {}
-            for name, grp in _df.groupby(group_by_col):
-                arrivals = grp.groupby(case_col)[timestamp_col].min()
-                per_group[str(name)] = _iat_stats(arrivals, label=str(name))
-            result["by_" + group_by_col] = per_group
-
+            result["by_" + group_by_col] = {
+                str(name): _iat_stats(grp.groupby(case_col)[timestamp_col].min(), label=str(name))
+                for name, grp in _df.groupby(group_by_col)
+            }
         return result
 
     return extract_inter_arrival_times
@@ -1159,119 +946,130 @@ def make_compute_grouped_statistics(df: pd.DataFrame):
         min_value: float | None = None,
         percentiles: list[float] | None = None,
         outlier_method: Literal["none", "iqr", "zscore"] = "iqr",
-        outlier_threshold: float = 1.5,
+        outlier_threshold: float = 3.0,
+        remove_outliers: bool = False,
+        data_quality_reason: str | None = None,
     ) -> dict[str, Any]:
         """
-        Compute grouped descriptive statistics (count, mean, std, min, max,
-        median) for any numeric column. Supports optional row filtering and
-        custom percentile computation.
+        Compute grouped descriptive statistics (count, mean, std, min, max, median)
+        for any numeric column, with optional row filtering and percentiles.
 
-        Use this as a flexible fallback when the dedicated extraction tools
-        do not fit the analysis need — for example, grouping by a combination
-        of columns, or computing statistics for a custom filtered subset.
-
-        Outlier detection is applied per group before computing statistics.
-        Detected outliers are reported alongside clean statistics so that
-        extreme values are visible but do not skew simulation parameters.
+        Outliers are flagged but kept unless ``remove_outliers=True`` with a
+        documented ``data_quality_reason``.
 
         Args:
             value_col: Numeric column to aggregate.
-            group_by: One or more columns to group by. Pass as a list, e.g.
-                      ["resource"] or ["resource", "product"].
+            group_by: One or more columns to group by, as a list.
             filter_col: Column to filter rows on before aggregating.
             filter_values: Exact values to keep in filter_col.
-            min_value: Exclude rows where value_col is at or below this
-                       threshold. Pass None to disable.
-            percentiles: Additional percentiles to compute, e.g. [0.90, 0.95].
-                         Results appear as 'p90', 'p95', etc. alongside the
-                         standard aggregations. Computed on clean data only.
-            outlier_method: Method used to detect outliers within each group.
-                            'iqr'    — Tukey fences (Q1 - k*IQR, Q3 + k*IQR).
-                            'zscore' — values whose |z-score| exceeds the threshold.
-                            'none'   — no outlier detection.
-                            Default 'iqr'.
-            outlier_threshold: Multiplier k for IQR (default 1.5) or the
-                               z-score cutoff when method='zscore'.
+            min_value: Exclude rows where value_col <= this threshold. None disables.
+            percentiles: Additional percentiles, e.g. [0.90, 0.95].
+            outlier_method: 'iqr' (default), 'zscore' or 'none' — detection only.
+            outlier_threshold: IQR multiplier k (default 3.0) or z cutoff.
+            remove_outliers: Remove flagged values (requires data_quality_reason).
+            data_quality_reason: Why the flagged values are data errors.
         """
+        if remove_outliers and not data_quality_reason:
+            return {"error": "remove_outliers=True requires data_quality_reason (a documented data defect)."}
         _df = df.loc[:, df.columns.str.strip() != ""]
         _df = _df.loc[:, ~_df.columns.str.contains("^Unnamed")]
-
         if value_col not in _df.columns:
-            return {
-                "error": f"Column '{value_col}' not found.",
-                "available_columns": list(_df.columns),
-            }
-
+            return {"error": f"Column '{value_col}' not found.", "available_columns": list(_df.columns)}
         missing_groups = [c for c in group_by if c not in _df.columns]
         if missing_groups:
             return {"error": f"group_by columns not found: {missing_groups}"}
-
         _df = _df.copy()
         _df[value_col] = pd.to_numeric(_df[value_col], errors="coerce")
-
         if filter_col and filter_values:
             if filter_col not in _df.columns:
                 return {"error": f"filter_col '{filter_col}' not found."}
             _df = _df[_df[filter_col].isin(filter_values)]
-
         if min_value is not None:
             _df = _df[_df[value_col] > min_value]
-
         if _df.empty:
             return {"error": "No records remain after filtering."}
 
         stats_dict: dict[str, Any] = {}
-        pct_results: dict[str, Any] = {}
-
         for name, grp in _df.groupby(group_by):
-            key = name if not isinstance(name, tuple) else str(name)
+            key = str(name[0] if isinstance(name, tuple) and len(name) == 1 else name)
             vals = grp[value_col].dropna()
-            mask, lower, upper = _detect_outliers(vals, outlier_method, outlier_threshold)
-            clean = vals[~mask]
-            if len(clean) == 0:
-                clean = vals  # fallback: keep all if every value is flagged
-            outlier_count = int(mask.sum())
-            stats_dict[key] = {
-                "count": len(vals),
-                "count_clean": len(clean),
-                "mean": round(float(clean.mean()), 4),
-                "std": round(float(clean.std()), 4),
-                "min": round(float(clean.min()), 4),
-                "max": round(float(clean.max()), 4),
-                "median": round(float(clean.median()), 4),
-                "outliers": {
-                    "count": outlier_count,
-                    "rate": round(outlier_count / len(vals), 4) if len(vals) > 0 else 0.0,
-                    "method": outlier_method,
-                    "threshold": outlier_threshold,
-                    "lower_bound": round(lower, 4) if lower is not None else None,
-                    "upper_bound": round(upper, 4) if upper is not None else None,
-                },
-            }
+            stats_dict[key] = _group_stats(vals, outlier_method, outlier_threshold, remove_outliers)
             if percentiles:
-                pct_results[key] = {
-                    f"p{int(p * 100)}": round(float(clean.quantile(p)), 4)
-                    for p in percentiles
+                stats_dict[key]["percentiles"] = {
+                    f"p{int(p * 100)}": round(float(vals.quantile(p)), 4) for p in percentiles
                 }
-
-        result: dict[str, Any] = {
+        return {
             "value_column": value_col,
             "group_by": group_by,
             "filter": {"col": filter_col, "values": filter_values},
-            "min_value_threshold": min_value,
-            "outlier_method": outlier_method,
-            "outlier_threshold": outlier_threshold,
+            "outliers_removed": remove_outliers,
+            "data_quality_reason": data_quality_reason,
             "total_records": len(_df),
-            "groups": len(stats_dict),
             "statistics": stats_dict,
         }
 
-        if percentiles:
-            result["percentiles"] = pct_results
-
-        return result
-
     return compute_grouped_statistics
+
+
+# -----------------------------------------------------------------------------
+
+
+def make_fit_activity_durations(df: pd.DataFrame, schema_provider):
+    """Return a tool that fits service-time distributions per activity from activity instances."""
+
+    @tool
+    def fit_activity_durations(
+        group_by: Literal["activity", "activity_resource", "resource"] = "activity",
+        include_failures: bool = False,
+        exclude_case_ids: list[str] | None = None,
+        min_parametric_n: int = 30,
+    ) -> dict[str, Any]:
+        """
+        Fit service-time distributions (end - start of each activity instance, in
+        seconds) using the confirmed log schema — no duration columns needed, and
+        lifecycle rows cannot be mixed up (queueing time is excluded by design).
+
+        Returns, per group, the empirical stats and a recommended distribution
+        (parametric fit that passed the moment/tail gate and the bootstrap KS test,
+        else the empirical quantile table, else triangular for N < 10). Copy the
+        ``best_fit`` entries verbatim into the spec section ``activities``.
+
+        Args:
+            group_by: 'activity' (default), 'activity_resource' (activity x
+                      concrete resource) or 'resource'.
+            include_failures: Also include failed attempts (default False).
+            exclude_case_ids: Cases to leave out.
+            min_parametric_n: Minimum N for a parametric recommendation (default 30).
+        """
+        from src.data_extraction_tools.eventlog import build_instances
+
+        schema = schema_provider()
+        if not schema:
+            return {"error": "No confirmed log schema. The data analysis phase must call set_log_schema first."}
+        inst, _ = build_instances(df, schema)
+        if exclude_case_ids:
+            inst = inst[~inst["case_id"].isin([str(c) for c in exclude_case_ids])]
+        keys = {"activity": ["activity"], "activity_resource": ["activity", "resource"],
+                "resource": ["resource"]}[group_by]
+        attempts = inst.groupby(keys).size()
+        failures = inst[inst["state"] == "failure"].groupby(keys).size().reindex(attempts.index, fill_value=0)
+        if not include_failures:
+            inst = inst[inst["state"] == "success"]
+        inst = inst.assign(duration=inst["end"] - inst["start"])
+        results = {}
+        for name, grp in inst.groupby(keys):
+            key = name[0] if isinstance(name, tuple) and len(name) == 1 else name
+            label = "|".join(map(str, name)) if isinstance(name, tuple) else str(name)
+            res = fit_numeric_series(grp["duration"], label=label, min_parametric_n=min_parametric_n)
+            res["attempts"] = int(attempts.get(key, 0))
+            res["failures"] = int(failures.get(key, 0))
+            res["failure_probability"] = round(res["failures"] / res["attempts"], 4) if res["attempts"] else 0.0
+            res["resources"] = sorted(grp["resource"].unique().tolist())
+            results[label] = res
+        return {"unit": "seconds", "group_by": group_by, "include_failures": include_failures,
+                "results": results}
+
+    return fit_activity_durations
 
 
 # =============================================================================

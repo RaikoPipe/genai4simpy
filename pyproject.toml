@@ -18,13 +18,9 @@ dependencies = [
     "langchain-tavily>=0.1",
     "gradio>=4.0.0",
     "langchain-community",
-    "langchain-huggingface",
-    "unstructured",
     "markdown",
     "langchain-ollama",
     "loguru",
-    "sentence-transformers",
-    "chromadb",
     "deepagents",
     "langgraph-cli[inmem]",
     "pyarrow",
@@ -36,6 +32,8 @@ dependencies = [
     "scipy",
     "matplotlib",
     "httpx",
+    "pydantic>=2",
+    "openai",
 ]
 
 

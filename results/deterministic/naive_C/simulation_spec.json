@@ -1,0 +1,1791 @@
+{
+ "window": {
+  "t0": "2021-07-01T18:48:23.227456+00:00",
+  "horizon_s": 5461.506544,
+  "terminal_activity": "/hbw/store"
+ },
+ "resources": [
+  {
+   "name": "dm_2",
+   "resource_class": "dm",
+   "capacity": 1
+  },
+  {
+   "name": "hbw_1",
+   "resource_class": "hbw",
+   "capacity": 1
+  },
+  {
+   "name": "hbw_2",
+   "resource_class": "hbw",
+   "capacity": 1
+  },
+  {
+   "name": "hw_1",
+   "resource_class": "hw",
+   "capacity": 1
+  },
+  {
+   "name": "mm_1",
+   "resource_class": "mm",
+   "capacity": 1
+  },
+  {
+   "name": "mm_2",
+   "resource_class": "mm",
+   "capacity": 1
+  },
+  {
+   "name": "ov_1",
+   "resource_class": "ov",
+   "capacity": 1
+  },
+  {
+   "name": "ov_2",
+   "resource_class": "ov",
+   "capacity": 1
+  },
+  {
+   "name": "pm_1",
+   "resource_class": "pm",
+   "capacity": 1
+  },
+  {
+   "name": "sm_1",
+   "resource_class": "sm",
+   "capacity": 1
+  },
+  {
+   "name": "sm_2",
+   "resource_class": "sm",
+   "capacity": 1
+  },
+  {
+   "name": "vgr_1",
+   "resource_class": "vgr",
+   "capacity": 1
+  },
+  {
+   "name": "vgr_2",
+   "resource_class": "vgr",
+   "capacity": 1
+  },
+  {
+   "name": "wt_1",
+   "resource_class": "wt",
+   "capacity": 1
+  },
+  {
+   "name": "wt_2",
+   "resource_class": "wt",
+   "capacity": 1
+  }
+ ],
+ "activities": [
+  {
+   "name": "/dm/cylindrical_drill",
+   "eligible_resources": [
+    "dm_2"
+   ],
+   "duration": {
+    "family": "triang",
+    "params": {
+     "c": 0.5,
+     "loc": 39.078,
+     "scale": 7.75
+    },
+    "mean": 42.953,
+    "n": 2,
+    "source": "fit_activity_durations"
+   },
+   "failure_probability": 0.0
+  },
+  {
+   "name": "/dm/drill",
+   "eligible_resources": [
+    "dm_2"
+   ],
+   "duration": {
+    "family": "triang",
+    "params": {
+     "c": 0.36581,
+     "loc": 15.812,
+     "scale": 26.142
+    },
+    "mean": 27.129,
+    "n": 4,
+    "source": "fit_activity_durations"
+   },
+   "failure_probability": 0.0
+  },
+  {
+   "name": "/dm/lower",
+   "eligible_resources": [
+    "dm_2"
+   ],
+   "duration": {
+    "family": "triang",
+    "params": {
+     "c": 0.96875,
+     "loc": 13.828,
+     "scale": 0.016
+    },
+    "mean": 13.8398,
+    "n": 4,
+    "source": "fit_activity_durations"
+   },
+   "failure_probability": 0.0
+  },
+  {
+   "name": "/hbw/get_empty_bucket",
+   "eligible_resources": [
+    "hbw_1"
+   ],
+   "duration": {
+    "family": "empirical_quantiles",
+    "params": {},
+    "mean": 38.3806,
+    "n": 14,
+    "source": "fit_activity_durations",
+    "quantiles": [
+     32.953,
+     33.4613,
+     33.8661,
+     34.15015,
+     35.3246,
+     36.09725,
+     36.1083,
+     36.27335,
+     36.4506,
+     36.5923,
+     36.7265,
+     37.27095,
+     39.1904,
+     39.8305,
+     40.0519,
+     41.09775,
+     41.85,
+     42.39375,
+     42.6375,
+     44.62565,
+     48.109
+    ],
+    "quantile_probs": [
+     0.0,
+     0.05,
+     0.1,
+     0.15,
+     0.2,
+     0.25,
+     0.3,
+     0.35,
+     0.4,
+     0.45,
+     0.5,
+     0.55,
+     0.6,
+     0.65,
+     0.7,
+     0.75,
+     0.8,
+     0.85,
+     0.9,
+     0.95,
+     1.0
+    ]
+   },
+   "failure_probability": 0.0
+  },
+  {
+   "name": "/hbw/store",
+   "eligible_resources": [
+    "hbw_1"
+   ],
+   "duration": {
+    "family": "empirical_quantiles",
+    "params": {},
+    "mean": 37.1995,
+    "n": 13,
+    "source": "fit_activity_durations",
+    "quantiles": [
+     30.734,
+     31.2122,
+     32.103,
+     33.819,
+     34.5154,
+     34.702,
+     34.9558,
+     35.8468,
+     38.0122,
+     38.9592,
+     39.297,
+     39.3156,
+     39.3782,
+     39.5288,
+     39.7038,
+     39.891,
+     39.9096,
+     39.972,
+     40.122,
+     40.1784,
+     40.188
+    ],
+    "quantile_probs": [
+     0.0,
+     0.05,
+     0.1,
+     0.15,
+     0.2,
+     0.25,
+     0.3,
+     0.35,
+     0.4,
+     0.45,
+     0.5,
+     0.55,
+     0.6,
+     0.65,
+     0.7,
+     0.75,
+     0.8,
+     0.85,
+     0.9,
+     0.95,
+     1.0
+    ]
+   },
+   "failure_probability": 0.0
+  },
+  {
+   "name": "/hbw/store_empty_bucket",
+   "eligible_resources": [
+    "hbw_2"
+   ],
+   "duration": {
+    "family": "uniform",
+    "params": {
+     "loc": 31.734,
+     "scale": 12.297
+    },
+    "mean": 37.0133,
+    "n": 34,
+    "source": "fit_activity_durations"
+   },
+   "failure_probability": 0.0
+  },
+  {
+   "name": "/hbw/unload",
+   "eligible_resources": [
+    "hbw_2"
+   ],
+   "duration": {
+    "family": "triang",
+    "params": {
+     "c": 1e-06,
+     "loc": 31.592982,
+     "scale": 21.134166
+    },
+    "mean": 38.2486,
+    "n": 35,
+    "source": "fit_activity_durations"
+   },
+   "failure_probability": 0.0541
+  },
+  {
+   "name": "/hw/human_review",
+   "eligible_resources": [
+    "hw_1"
+   ],
+   "duration": {
+    "family": "empirical_quantiles",
+    "params": {},
+    "mean": 46.8095,
+    "n": 15,
+    "source": "fit_activity_durations",
+    "quantiles": [
+     0.328,
+     0.6339,
+     0.809,
+     1.3581,
+     4.7398,
+     5.806,
+     7.3716,
+     12.5012,
+     15.8026,
+     20.398,
+     27.125,
+     32.4842,
+     43.575,
+     57.216,
+     60.366,
+     62.25,
+     73.3592,
+     108.7974,
+     114.9754,
+     136.5222,
+     185.063
+    ],
+    "quantile_probs": [
+     0.0,
+     0.05,
+     0.1,
+     0.15,
+     0.2,
+     0.25,
+     0.3,
+     0.35,
+     0.4,
+     0.45,
+     0.5,
+     0.55,
+     0.6,
+     0.65,
+     0.7,
+     0.75,
+     0.8,
+     0.85,
+     0.9,
+     0.95,
+     1.0
+    ]
+   },
+   "failure_probability": 0.0
+  },
+  {
+   "name": "/mm/deburr",
+   "eligible_resources": [
+    "mm_1",
+    "mm_2"
+   ],
+   "duration": {
+    "family": "empirical_quantiles",
+    "params": {},
+    "mean": 17.0527,
+    "n": 19,
+    "source": "fit_activity_durations",
+    "quantiles": [
+     13.843,
+     13.8574,
+     13.8718,
+     13.875,
+     13.9596,
+     14.0315,
+     14.0534,
+     14.072,
+     14.0932,
+     14.1081,
+     14.235,
+     14.2485,
+     14.2628,
+     14.266,
+     14.3878,
+     14.547,
+     14.7126,
+     14.9094,
+     15.181,
+     20.7475,
+     66.562
+    ],
+    "quantile_probs": [
+     0.0,
+     0.05,
+     0.1,
+     0.15,
+     0.2,
+     0.25,
+     0.3,
+     0.35,
+     0.4,
+     0.45,
+     0.5,
+     0.55,
+     0.6,
+     0.65,
+     0.7,
+     0.75,
+     0.8,
+     0.85,
+     0.9,
+     0.95,
+     1.0
+    ]
+   },
+   "failure_probability": 0.0
+  },
+  {
+   "name": "/mm/drill",
+   "eligible_resources": [
+    "mm_2"
+   ],
+   "duration": {
+    "family": "triang",
+    "params": {
+     "c": 0.356553,
+     "loc": 5.078,
+     "scale": 27.125
+    },
+    "mean": 13.7109,
+    "n": 8,
+    "source": "fit_activity_durations"
+   },
+   "failure_probability": 0.0
+  },
+  {
+   "name": "/mm/mill",
+   "eligible_resources": [
+    "mm_1",
+    "mm_2"
+   ],
+   "duration": {
+    "family": "empirical_quantiles",
+    "params": {},
+    "mean": 8.7129,
+    "n": 11,
+    "source": "fit_activity_durations",
+    "quantiles": [
+     5.078,
+     5.179,
+     5.28,
+     5.2805,
+     5.281,
+     5.281,
+     5.281,
+     5.2815,
+     5.282,
+     5.6955,
+     6.109,
+     6.2105,
+     6.312,
+     10.164,
+     14.016,
+     14.1565,
+     14.297,
+     14.375,
+     14.453,
+     14.453,
+     14.453
+    ],
+    "quantile_probs": [
+     0.0,
+     0.05,
+     0.1,
+     0.15,
+     0.2,
+     0.25,
+     0.3,
+     0.35,
+     0.4,
+     0.45,
+     0.5,
+     0.55,
+     0.6,
+     0.65,
+     0.7,
+     0.75,
+     0.8,
+     0.85,
+     0.9,
+     0.95,
+     1.0
+    ]
+   },
+   "failure_probability": 0.0
+  },
+  {
+   "name": "/mm/transport_from_to",
+   "eligible_resources": [
+    "mm_1",
+    "mm_2"
+   ],
+   "duration": {
+    "family": "triang",
+    "params": {
+     "c": 0.752,
+     "loc": 12.203,
+     "scale": 0.25
+    },
+    "mean": 12.349,
+    "n": 3,
+    "source": "fit_activity_durations"
+   },
+   "failure_probability": 0.0
+  },
+  {
+   "name": "/ov/burn",
+   "eligible_resources": [
+    "ov_1",
+    "ov_2"
+   ],
+   "duration": {
+    "family": "uniform",
+    "params": {
+     "loc": 21.421,
+     "scale": 20.111
+    },
+    "mean": 30.4531,
+    "n": 32,
+    "source": "fit_activity_durations"
+   },
+   "failure_probability": 0.0
+  },
+  {
+   "name": "/ov/temper",
+   "eligible_resources": [
+    "ov_1"
+   ],
+   "duration": {
+    "family": "triang",
+    "params": {
+     "c": 0.070377,
+     "loc": 51.437,
+     "scale": 1.563
+    },
+    "mean": 51.7167,
+    "n": 8,
+    "source": "fit_activity_durations"
+   },
+   "failure_probability": 0.0
+  },
+  {
+   "name": "/pm/punch_gill",
+   "eligible_resources": [
+    "pm_1"
+   ],
+   "duration": {
+    "family": "triang",
+    "params": {
+     "c": 0.910159,
+     "loc": 23.859,
+     "scale": 3.829
+    },
+    "mean": 26.5588,
+    "n": 4,
+    "source": "fit_activity_durations"
+   },
+   "failure_probability": 0.0
+  },
+  {
+   "name": "/pm/punch_recesses",
+   "eligible_resources": [
+    "pm_1"
+   ],
+   "duration": {
+    "family": "triang",
+    "params": {
+     "c": 0.5,
+     "loc": 23.672,
+     "scale": 0.157
+    },
+    "mean": 23.7505,
+    "n": 2,
+    "source": "fit_activity_durations"
+   },
+   "failure_probability": 0.0
+  },
+  {
+   "name": "/pm/punch_ribbing",
+   "eligible_resources": [
+    "pm_1"
+   ],
+   "duration": {
+    "family": "triang",
+    "params": {
+     "c": 0.5,
+     "loc": 23.344,
+     "scale": 0.453
+    },
+    "mean": 23.5705,
+    "n": 2,
+    "source": "fit_activity_durations"
+   },
+   "failure_probability": 0.0
+  },
+  {
+   "name": "/sm/sort",
+   "eligible_resources": [
+    "sm_1",
+    "sm_2"
+   ],
+   "duration": {
+    "family": "empirical_quantiles",
+    "params": {},
+    "mean": 11.7752,
+    "n": 13,
+    "source": "fit_activity_durations",
+    "quantiles": [
+     8.578,
+     8.6062,
+     8.6564,
+     8.7506,
+     9.3316,
+     10.156,
+     10.1746,
+     10.2246,
+     10.3374,
+     10.5374,
+     10.781,
+     11.6342,
+     12.2406,
+     12.3534,
+     12.6346,
+     13.0,
+     13.1872,
+     13.334,
+     13.4,
+     16.5596,
+     21.266
+    ],
+    "quantile_probs": [
+     0.0,
+     0.05,
+     0.1,
+     0.15,
+     0.2,
+     0.25,
+     0.3,
+     0.35,
+     0.4,
+     0.45,
+     0.5,
+     0.55,
+     0.6,
+     0.65,
+     0.7,
+     0.75,
+     0.8,
+     0.85,
+     0.9,
+     0.95,
+     1.0
+    ]
+   },
+   "failure_probability": 0.0
+  },
+  {
+   "name": "/sm/transport",
+   "eligible_resources": [
+    "sm_1",
+    "sm_2"
+   ],
+   "duration": {
+    "family": "empirical_quantiles",
+    "params": {},
+    "mean": 18.9202,
+    "n": 19,
+    "source": "fit_activity_durations",
+    "quantiles": [
+     14.219,
+     14.3036,
+     14.4626,
+     14.6092,
+     14.6842,
+     14.742,
+     14.8062,
+     14.8626,
+     14.9186,
+     14.969,
+     14.969,
+     18.5267,
+     18.9596,
+     18.9795,
+     18.9936,
+     19.0155,
+     19.0438,
+     19.2829,
+     19.943,
+     24.3107,
+     58.328
+    ],
+    "quantile_probs": [
+     0.0,
+     0.05,
+     0.1,
+     0.15,
+     0.2,
+     0.25,
+     0.3,
+     0.35,
+     0.4,
+     0.45,
+     0.5,
+     0.55,
+     0.6,
+     0.65,
+     0.7,
+     0.75,
+     0.8,
+     0.85,
+     0.9,
+     0.95,
+     1.0
+    ]
+   },
+   "failure_probability": 0.0
+  },
+  {
+   "name": "/vgr/pick_up_and_transport",
+   "eligible_resources": [
+    "vgr_1",
+    "vgr_2"
+   ],
+   "duration": {
+    "family": "triang",
+    "params": {
+     "c": 0.976708,
+     "loc": 4.832668,
+     "scale": 47.71674
+    },
+    "mean": 36.2701,
+    "n": 101,
+    "source": "fit_activity_durations"
+   },
+   "failure_probability": 0.0288
+  },
+  {
+   "name": "/wt/pick_up_and_transport",
+   "eligible_resources": [
+    "wt_1",
+    "wt_2"
+   ],
+   "duration": {
+    "family": "empirical_quantiles",
+    "params": {},
+    "mean": 27.715,
+    "n": 29,
+    "source": "fit_activity_durations",
+    "quantiles": [
+     25.812,
+     25.922,
+     25.9348,
+     25.9582,
+     26.031,
+     26.031,
+     26.031,
+     26.0318,
+     26.0492,
+     26.1094,
+     29.094,
+     29.203,
+     29.203,
+     29.207,
+     29.2748,
+     29.313,
+     29.3562,
+     29.4218,
+     29.437,
+     29.4466,
+     29.531
+    ],
+    "quantile_probs": [
+     0.0,
+     0.05,
+     0.1,
+     0.15,
+     0.2,
+     0.25,
+     0.3,
+     0.35,
+     0.4,
+     0.45,
+     0.5,
+     0.55,
+     0.6,
+     0.65,
+     0.7,
+     0.75,
+     0.8,
+     0.85,
+     0.9,
+     0.95,
+     1.0
+    ]
+   },
+   "failure_probability": 0.0
+  }
+ ],
+ "variants": [
+  {
+   "name": "WF_101",
+   "probability": 0.1081,
+   "steps": [
+    {
+     "activity": "/hbw/unload",
+     "resources": {
+      "hbw_2": 1.0
+     }
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "resources": {
+      "vgr_2": 1.0
+     }
+    },
+    {
+     "activity": "/hbw/store_empty_bucket",
+     "resources": {
+      "hbw_2": 1.0
+     }
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "resources": {
+      "vgr_1": 1.0
+     }
+    },
+    {
+     "activity": "/ov/burn",
+     "resources": {
+      "ov_1": 1.0
+     }
+    },
+    {
+     "activity": "/ov/temper",
+     "resources": {
+      "ov_1": 1.0
+     }
+    },
+    {
+     "activity": "/wt/pick_up_and_transport",
+     "resources": {
+      "wt_1": 1.0
+     }
+    },
+    {
+     "activity": "/mm/mill",
+     "resources": {
+      "mm_1": 1.0
+     }
+    },
+    {
+     "activity": "/mm/deburr",
+     "resources": {
+      "mm_1": 1.0
+     }
+    },
+    {
+     "activity": "/sm/sort",
+     "resources": {
+      "sm_1": 1.0
+     }
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "resources": {
+      "vgr_1": 1.0
+     }
+    },
+    {
+     "activity": "/hw/human_review",
+     "resources": {
+      "hw_1": 1.0
+     }
+    },
+    {
+     "activity": "/hbw/get_empty_bucket",
+     "resources": {
+      "hbw_1": 1.0
+     }
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "resources": {
+      "vgr_1": 1.0
+     }
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "resources": {
+      "vgr_1": 1.0
+     }
+    },
+    {
+     "activity": "/hbw/store",
+     "resources": {
+      "hbw_1": 1.0
+     }
+    }
+   ]
+  },
+  {
+   "name": "WF_102",
+   "probability": 0.1351,
+   "steps": [
+    {
+     "activity": "/hbw/unload",
+     "resources": {
+      "hbw_2": 1.0
+     }
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "resources": {
+      "vgr_2": 0.6,
+      "vgr_1": 0.4
+     }
+    },
+    {
+     "activity": "/hbw/store_empty_bucket",
+     "resources": {
+      "hbw_2": 1.0
+     }
+    },
+    {
+     "activity": "/ov/burn",
+     "resources": {
+      "ov_2": 1.0
+     }
+    },
+    {
+     "activity": "/wt/pick_up_and_transport",
+     "resources": {
+      "wt_2": 1.0
+     }
+    },
+    {
+     "activity": "/mm/drill",
+     "resources": {
+      "mm_2": 1.0
+     }
+    },
+    {
+     "activity": "/sm/transport",
+     "resources": {
+      "sm_2": 1.0
+     }
+    },
+    {
+     "activity": "/dm/lower",
+     "resources": {
+      "dm_2": 1.0
+     }
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "resources": {
+      "vgr_1": 1.0
+     }
+    },
+    {
+     "activity": "/hw/human_review",
+     "resources": {
+      "hw_1": 1.0
+     }
+    },
+    {
+     "activity": "/hbw/get_empty_bucket",
+     "resources": {
+      "hbw_1": 1.0
+     }
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "resources": {
+      "vgr_1": 1.0
+     }
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "resources": {
+      "vgr_1": 1.0
+     }
+    },
+    {
+     "activity": "/hbw/store",
+     "resources": {
+      "hbw_1": 1.0
+     }
+    }
+   ]
+  },
+  {
+   "name": "WF_103",
+   "probability": 0.1351,
+   "steps": [
+    {
+     "activity": "/hbw/unload",
+     "resources": {
+      "hbw_2": 1.0
+     }
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "resources": {
+      "vgr_2": 1.0
+     }
+    },
+    {
+     "activity": "/hbw/store_empty_bucket",
+     "resources": {
+      "hbw_2": 1.0
+     }
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "resources": {
+      "vgr_1": 1.0
+     }
+    },
+    {
+     "activity": "/ov/burn",
+     "resources": {
+      "ov_1": 1.0
+     }
+    },
+    {
+     "activity": "/ov/temper",
+     "resources": {
+      "ov_1": 1.0
+     }
+    },
+    {
+     "activity": "/wt/pick_up_and_transport",
+     "resources": {
+      "wt_1": 1.0
+     }
+    },
+    {
+     "activity": "/mm/mill",
+     "resources": {
+      "mm_1": 1.0
+     }
+    },
+    {
+     "activity": "/mm/deburr",
+     "resources": {
+      "mm_1": 1.0
+     }
+    },
+    {
+     "activity": "/sm/transport",
+     "resources": {
+      "sm_1": 1.0
+     }
+    },
+    {
+     "activity": "/pm/punch_recesses",
+     "resources": {
+      "pm_1": 1.0
+     }
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "resources": {
+      "vgr_1": 1.0
+     }
+    },
+    {
+     "activity": "/hw/human_review",
+     "resources": {
+      "hw_1": 1.0
+     }
+    },
+    {
+     "activity": "/hbw/get_empty_bucket",
+     "resources": {
+      "hbw_1": 1.0
+     }
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "resources": {
+      "vgr_1": 1.0
+     }
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "resources": {
+      "vgr_1": 1.0
+     }
+    },
+    {
+     "activity": "/hbw/store",
+     "resources": {
+      "hbw_1": 1.0
+     }
+    }
+   ]
+  },
+  {
+   "name": "WF_104",
+   "probability": 0.0811,
+   "steps": [
+    {
+     "activity": "/hbw/unload",
+     "resources": {
+      "hbw_2": 1.0
+     }
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "resources": {
+      "vgr_2": 1.0
+     }
+    },
+    {
+     "activity": "/hbw/store_empty_bucket",
+     "resources": {
+      "hbw_2": 1.0
+     }
+    },
+    {
+     "activity": "/ov/burn",
+     "resources": {
+      "ov_2": 1.0
+     }
+    },
+    {
+     "activity": "/wt/pick_up_and_transport",
+     "resources": {
+      "wt_2": 1.0
+     }
+    },
+    {
+     "activity": "/sm/sort",
+     "resources": {
+      "sm_2": 1.0
+     }
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "resources": {
+      "vgr_1": 0.5,
+      "vgr_2": 0.5
+     }
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "resources": {
+      "vgr_1": 1.0
+     }
+    },
+    {
+     "activity": "/wt/pick_up_and_transport",
+     "resources": {
+      "wt_1": 1.0
+     }
+    },
+    {
+     "activity": "/mm/deburr",
+     "resources": {
+      "mm_1": 1.0
+     }
+    },
+    {
+     "activity": "/sm/transport",
+     "resources": {
+      "sm_1": 1.0
+     }
+    },
+    {
+     "activity": "/pm/punch_gill",
+     "resources": {
+      "pm_1": 1.0
+     }
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "resources": {
+      "vgr_1": 1.0
+     }
+    },
+    {
+     "activity": "/hw/human_review",
+     "resources": {
+      "hw_1": 1.0
+     }
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "resources": {
+      "vgr_2": 1.0
+     }
+    },
+    {
+     "activity": "/hbw/store_empty_bucket",
+     "resources": {
+      "hbw_2": 1.0
+     }
+    },
+    {
+     "activity": "/ov/burn",
+     "resources": {
+      "ov_2": 1.0
+     }
+    },
+    {
+     "activity": "/wt/pick_up_and_transport",
+     "resources": {
+      "wt_2": 1.0
+     }
+    },
+    {
+     "activity": "/mm/mill",
+     "resources": {
+      "mm_2": 1.0
+     }
+    },
+    {
+     "activity": "/sm/sort",
+     "resources": {
+      "sm_2": 1.0
+     }
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "resources": {
+      "vgr_2": 1.0
+     }
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "resources": {
+      "vgr_1": 1.0
+     }
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "resources": {
+      "vgr_1": 1.0
+     }
+    }
+   ]
+  },
+  {
+   "name": "WF_105",
+   "probability": 0.1081,
+   "steps": [
+    {
+     "activity": "/hbw/unload",
+     "resources": {
+      "hbw_2": 1.0
+     }
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "resources": {
+      "vgr_2": 1.0
+     }
+    },
+    {
+     "activity": "/hbw/store_empty_bucket",
+     "resources": {
+      "hbw_2": 1.0
+     }
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "resources": {
+      "vgr_1": 1.0
+     }
+    },
+    {
+     "activity": "/ov/burn",
+     "resources": {
+      "ov_1": 1.0
+     }
+    },
+    {
+     "activity": "/wt/pick_up_and_transport",
+     "resources": {
+      "wt_1": 1.0
+     }
+    },
+    {
+     "activity": "/mm/deburr",
+     "resources": {
+      "mm_1": 1.0
+     }
+    },
+    {
+     "activity": "/sm/sort",
+     "resources": {
+      "sm_1": 1.0
+     }
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "resources": {
+      "vgr_1": 1.0
+     }
+    },
+    {
+     "activity": "/hw/human_review",
+     "resources": {
+      "hw_1": 1.0
+     }
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "resources": {
+      "vgr_1": 1.0
+     }
+    },
+    {
+     "activity": "/hbw/get_empty_bucket",
+     "resources": {
+      "hbw_1": 1.0
+     }
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "resources": {
+      "vgr_1": 1.0
+     }
+    },
+    {
+     "activity": "/hbw/store",
+     "resources": {
+      "hbw_1": 1.0
+     }
+    }
+   ]
+  },
+  {
+   "name": "WF_108",
+   "probability": 0.0811,
+   "steps": [
+    {
+     "activity": "/hbw/unload",
+     "resources": {
+      "hbw_2": 1.0
+     }
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "resources": {
+      "vgr_2": 1.0
+     }
+    },
+    {
+     "activity": "/hbw/store_empty_bucket",
+     "resources": {
+      "hbw_2": 1.0
+     }
+    },
+    {
+     "activity": "/ov/burn",
+     "resources": {
+      "ov_2": 1.0
+     }
+    },
+    {
+     "activity": "/wt/pick_up_and_transport",
+     "resources": {
+      "wt_2": 1.0
+     }
+    },
+    {
+     "activity": "/mm/drill",
+     "resources": {
+      "mm_2": 1.0
+     }
+    },
+    {
+     "activity": "/mm/deburr",
+     "resources": {
+      "mm_2": 1.0
+     }
+    },
+    {
+     "activity": "/sm/sort",
+     "resources": {
+      "sm_2": 1.0
+     }
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "resources": {
+      "vgr_2": 1.0
+     }
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "resources": {
+      "vgr_1": 1.0
+     }
+    },
+    {
+     "activity": "/hw/human_review",
+     "resources": {
+      "hw_1": 1.0
+     }
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "resources": {
+      "vgr_1": 1.0
+     }
+    },
+    {
+     "activity": "/hbw/get_empty_bucket",
+     "resources": {
+      "hbw_1": 1.0
+     }
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "resources": {
+      "vgr_1": 1.0
+     }
+    },
+    {
+     "activity": "/hbw/store",
+     "resources": {
+      "hbw_1": 1.0
+     }
+    }
+   ]
+  },
+  {
+   "name": "WF_109",
+   "probability": 0.0811,
+   "steps": [
+    {
+     "activity": "/hbw/unload",
+     "resources": {
+      "hbw_2": 1.0
+     }
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "resources": {
+      "vgr_2": 1.0
+     }
+    },
+    {
+     "activity": "/hbw/store_empty_bucket",
+     "resources": {
+      "hbw_2": 1.0
+     }
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "resources": {
+      "vgr_1": 1.0
+     }
+    },
+    {
+     "activity": "/ov/burn",
+     "resources": {
+      "ov_1": 1.0
+     }
+    },
+    {
+     "activity": "/ov/temper",
+     "resources": {
+      "ov_1": 1.0
+     }
+    },
+    {
+     "activity": "/wt/pick_up_and_transport",
+     "resources": {
+      "wt_1": 1.0
+     }
+    },
+    {
+     "activity": "/mm/mill",
+     "resources": {
+      "mm_1": 1.0
+     }
+    },
+    {
+     "activity": "/mm/deburr",
+     "resources": {
+      "mm_1": 1.0
+     }
+    },
+    {
+     "activity": "/sm/transport",
+     "resources": {
+      "sm_1": 1.0
+     }
+    },
+    {
+     "activity": "/pm/punch_ribbing",
+     "resources": {
+      "pm_1": 1.0
+     }
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "resources": {
+      "vgr_1": 1.0
+     }
+    },
+    {
+     "activity": "/hw/human_review",
+     "resources": {
+      "hw_1": 1.0
+     }
+    },
+    {
+     "activity": "/hbw/get_empty_bucket",
+     "resources": {
+      "hbw_1": 1.0
+     }
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "resources": {
+      "vgr_1": 1.0
+     }
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "resources": {
+      "vgr_1": 1.0
+     }
+    },
+    {
+     "activity": "/hbw/store",
+     "resources": {
+      "hbw_1": 1.0
+     }
+    }
+   ]
+  },
+  {
+   "name": "WF_1106",
+   "probability": 0.1622,
+   "steps": [
+    {
+     "activity": "/hbw/unload",
+     "resources": {
+      "hbw_2": 1.0
+     }
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "resources": {
+      "vgr_2": 1.0
+     }
+    },
+    {
+     "activity": "/hbw/store_empty_bucket",
+     "resources": {
+      "hbw_2": 1.0
+     }
+    },
+    {
+     "activity": "/ov/burn",
+     "resources": {
+      "ov_2": 1.0
+     }
+    },
+    {
+     "activity": "/wt/pick_up_and_transport",
+     "resources": {
+      "wt_2": 1.0
+     }
+    },
+    {
+     "activity": "/mm/transport_from_to",
+     "resources": {
+      "mm_2": 1.0
+     }
+    },
+    {
+     "activity": "/sm/transport",
+     "resources": {
+      "sm_2": 1.0
+     }
+    },
+    {
+     "activity": "/dm/drill",
+     "resources": {
+      "dm_2": 1.0
+     }
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "resources": {
+      "vgr_1": 1.0
+     }
+    },
+    {
+     "activity": "/hw/human_review",
+     "resources": {
+      "hw_1": 1.0
+     }
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "resources": {
+      "vgr_1": 1.0
+     }
+    },
+    {
+     "activity": "/hbw/get_empty_bucket",
+     "resources": {
+      "hbw_1": 1.0
+     }
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "resources": {
+      "vgr_1": 1.0
+     }
+    },
+    {
+     "activity": "/hbw/store",
+     "resources": {
+      "hbw_1": 1.0
+     }
+    }
+   ]
+  },
+  {
+   "name": "WF_1107",
+   "probability": 0.1081,
+   "steps": [
+    {
+     "activity": "/hbw/unload",
+     "resources": {
+      "hbw_2": 1.0
+     }
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "resources": {
+      "vgr_2": 1.0
+     }
+    },
+    {
+     "activity": "/hbw/store_empty_bucket",
+     "resources": {
+      "hbw_2": 1.0
+     }
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "resources": {
+      "vgr_1": 1.0
+     }
+    },
+    {
+     "activity": "/ov/burn",
+     "resources": {
+      "ov_1": 1.0
+     }
+    },
+    {
+     "activity": "/mm/transport_from_to",
+     "resources": {
+      "mm_1": 1.0
+     }
+    },
+    {
+     "activity": "/sm/transport",
+     "resources": {
+      "sm_1": 1.0
+     }
+    },
+    {
+     "activity": "/pm/punch_gill",
+     "resources": {
+      "pm_1": 1.0
+     }
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "resources": {
+      "vgr_1": 1.0
+     }
+    },
+    {
+     "activity": "/hw/human_review",
+     "resources": {
+      "hw_1": 1.0
+     }
+    },
+    {
+     "activity": "/hbw/get_empty_bucket",
+     "resources": {
+      "hbw_1": 1.0
+     }
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "resources": {
+      "vgr_1": 1.0
+     }
+    },
+    {
+     "activity": "/vgr/pick_up_and_transport",
+     "resources": {
+      "vgr_1": 1.0
+     }
+    },
+    {
+     "activity": "/hbw/store",
+     "resources": {
+      "hbw_1": 1.0
+     }
+    }
+   ]
+  }
+ ],
+ "arrivals": {
+  "model": "renewal",
+  "interarrival": {
+   "family": "empirical_quantiles",
+   "params": {},
+   "mean": 129.3455,
+   "n": 36,
+   "source": "extract_inter_arrival_times",
+   "quantiles": [
+    0.51015,
+    0.54927,
+    0.655464,
+    0.784723,
+    0.922058,
+    0.935234,
+    0.992272,
+    1.083505,
+    1.255658,
+    1.411412,
+    1.640648,
+    1.83726,
+    3.438256,
+    3.545175,
+    24.773232,
+    70.413993,
+    134.766243,
+    384.246435,
+    507.082923,
+    742.818049,
+    989.275852
+   ],
+   "quantile_probs": [
+    0.0,
+    0.05,
+    0.1,
+    0.15,
+    0.2,
+    0.25,
+    0.3,
+    0.35,
+    0.4,
+    0.45,
+    0.5,
+    0.55,
+    0.6,
+    0.65,
+    0.7,
+    0.75,
+    0.8,
+    0.85,
+    0.9,
+    0.95,
+    1.0
+   ]
+  }
+ },
+ "control_policies": {
+  "queue_discipline": {},
+  "priority_order": {}
+ },
+ "initial_state": {
+  "wip_at_start": 0
+ }
+}

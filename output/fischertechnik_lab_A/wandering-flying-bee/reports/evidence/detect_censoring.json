@@ -1,0 +1,118 @@
+{
+  "warnings": [
+    "Only 3/18 cases are complete: per-variant routing estimates from complete cases are thin; pool variants or flag them as low confidence.",
+    "12 cases end inside the window without the terminal activity (not window truncation): check whether they are scrap/abandoned or missing data."
+  ],
+  "window_T_s": 3183.2,
+  "inferred_first_activity": "/hbw/unload",
+  "inferred_terminal_activity": "/hbw/store",
+  "edge_tol_s": 56.5,
+  "n_cases": 18,
+  "n_complete": 3,
+  "right_censored": [
+    "WF_104_21",
+    "WF_108_18",
+    "WF_109_16"
+  ],
+  "left_censored": [],
+  "incomplete_interior": [
+    "WF_101_31",
+    "WF_102_32",
+    "WF_103_29",
+    "WF_103_30",
+    "WF_104_20",
+    "WF_105_21",
+    "WF_105_22",
+    "WF_108_17",
+    "WF_109_15",
+    "WF_1106_21",
+    "WF_1107_16",
+    "WF_1107_17"
+  ],
+  "missing_first_activity": [
+    "WF_104_20"
+  ],
+  "initial_wip_at_window_start": {
+    "count": 0,
+    "cases": []
+  },
+  "variant_mix": {
+    "all_cases": {
+      "WF_101": 0.111,
+      "WF_102": 0.111,
+      "WF_103": 0.111,
+      "WF_104": 0.111,
+      "WF_105": 0.111,
+      "WF_108": 0.111,
+      "WF_109": 0.111,
+      "WF_1106": 0.111,
+      "WF_1107": 0.111
+    },
+    "complete_cases": {
+      "WF_101": 0.333,
+      "WF_102": 0.333,
+      "WF_1106": 0.333
+    }
+  },
+  "step_presence": {
+    "WF_101": {
+      "n_all": 2,
+      "n_complete": 1,
+      "steps_biased_by_truncation": {
+        "/hbw/get_empty_bucket": {
+          "all": 0.5,
+          "complete_only": 1.0
+        },
+        "/hbw/store": {
+          "all": 0.5,
+          "complete_only": 1.0
+        },
+        "/wt/pick_up_and_transport": {
+          "all": 0.5,
+          "complete_only": 0.0
+        }
+      }
+    },
+    "WF_102": {
+      "n_all": 2,
+      "n_complete": 1,
+      "steps_biased_by_truncation": {
+        "/hbw/get_empty_bucket": {
+          "all": 0.5,
+          "complete_only": 1.0
+        },
+        "/hbw/store": {
+          "all": 0.5,
+          "complete_only": 1.0
+        },
+        "/ov/burn": {
+          "all": 0.5,
+          "complete_only": 0.0
+        }
+      }
+    },
+    "WF_1106": {
+      "n_all": 2,
+      "n_complete": 1,
+      "steps_biased_by_truncation": {
+        "/hbw/get_empty_bucket": {
+          "all": 0.5,
+          "complete_only": 1.0
+        },
+        "/hbw/store": {
+          "all": 0.5,
+          "complete_only": 1.0
+        },
+        "/hbw/store_empty_bucket": {
+          "all": 0.5,
+          "complete_only": 0.0
+        },
+        "/ov/burn": {
+          "all": 0.5,
+          "complete_only": 1.0
+        }
+      }
+    }
+  },
+  "guidance": "Estimate routing probabilities, step-presence (optional vs always-present steps) and per-variant sequences from COMPLETE cases only; right-censored cases are cut by the window end, not real early exits. Arrival rates and service times may use all cases. If initial_wip > 0, initialise the simulation with those cases in progress instead of replaying them. Never hard-code observed case ids."
+}

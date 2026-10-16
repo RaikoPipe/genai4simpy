@@ -1,0 +1,77 @@
+{
+  "wall_clock_s": 5906.8,
+  "totals": {
+    "model_calls": 67.0,
+    "model_latency_s": 5746.56,
+    "input_tokens": 0.0,
+    "output_tokens": 0.0,
+    "reasoning_tokens": 0.0,
+    "tool_calls": 76.0,
+    "tool_latency_s": 8676.48,
+    "tool_errors": 1.0
+  },
+  "per_agent": {
+    "model": {
+      "model_calls": 12.0,
+      "model_latency_s": 319.54,
+      "input_tokens": 0.0,
+      "output_tokens": 0.0,
+      "reasoning_tokens": 0.0
+    },
+    "tools": {
+      "tool_calls": 15.0,
+      "tool_latency_s": 5586.98
+    },
+    "distribution-fitting-agent": {
+      "model_calls": 14.0,
+      "model_latency_s": 1542.87,
+      "input_tokens": 0.0,
+      "output_tokens": 0.0,
+      "reasoning_tokens": 0.0,
+      "tool_calls": 18.0,
+      "tool_latency_s": 72.3,
+      "tool_errors": 1.0
+    },
+    "simulation-evaluator-agent": {
+      "model_calls": 9.0,
+      "model_latency_s": 1072.98,
+      "input_tokens": 0.0,
+      "output_tokens": 0.0,
+      "reasoning_tokens": 0.0,
+      "tool_calls": 12.0,
+      "tool_latency_s": 2937.15
+    },
+    "simpy-deep-coding-agent": {
+      "model_calls": 32.0,
+      "model_latency_s": 2811.16,
+      "input_tokens": 0.0,
+      "output_tokens": 0.0,
+      "reasoning_tokens": 0.0,
+      "tool_calls": 31.0,
+      "tool_latency_s": 80.05
+    }
+  },
+  "peak_input_tokens": {
+    "model": 0,
+    "distribution-fitting-agent": 0,
+    "simulation-evaluator-agent": 0,
+    "simpy-deep-coding-agent": 0
+  },
+  "event_counts": {
+    "thrash_guard": 2
+  },
+  "events": [
+    {
+      "ts": "2026-10-15T02:50:41.453264+00:00",
+      "kind": "thrash_guard",
+      "tool": "edit_simulation_code",
+      "repeats": 3
+    },
+    {
+      "ts": "2026-10-15T02:53:49.838980+00:00",
+      "kind": "thrash_guard",
+      "tool": "edit_simulation_code",
+      "repeats": 3
+    }
+  ]
+}

@@ -1,0 +1,100 @@
+{
+  "n_releases": 38,
+  "max_wip": 9,
+  "time_avg_wip": 5.91,
+  "share_time_at_max_wip": 0.152,
+  "wip_at_release": {
+    "n": 38,
+    "mean": 5.0,
+    "std": 2.325,
+    "cv": 0.465,
+    "median": 5.5,
+    "min": 0.0,
+    "max": 8.0
+  },
+  "release_spacing": {
+    "overall": {
+      "n": 37,
+      "mean": 140.254,
+      "std": 280.417,
+      "cv": 1.999,
+      "median": 3.188,
+      "min": 0.563,
+      "max": 1336.649
+    },
+    "arrivals": 38,
+    "threshold_s": 17.849,
+    "log_separation": 0.882,
+    "gap_to_burst_ratio": 161.516,
+    "regime": "two_regime",
+    "burst_iat": {
+      "n": 24,
+      "mean": 2.444,
+      "std": 2.381,
+      "cv": 0.975,
+      "median": 1.443,
+      "min": 0.563,
+      "max": 9.873
+    },
+    "gap_iat": {
+      "n": 13,
+      "mean": 394.672,
+      "std": 357.469,
+      "cv": 0.906,
+      "median": 294.136,
+      "min": 32.267,
+      "max": 1336.649
+    },
+    "burst_size": {
+      "mean": 2.714,
+      "values": [
+        4,
+        9,
+        4,
+        5,
+        1,
+        1,
+        1,
+        1,
+        6,
+        1,
+        1,
+        1,
+        2,
+        1
+      ],
+      "n_bursts": 14
+    },
+    "note": "Arrivals come in bursts: model a gap process between bursts (gap_iat) and burst_size arrivals per burst spaced by burst_iat. The overall mean IAT mixes both regimes; never drop the gaps as outliers."
+  },
+  "wip_after_each_release_burst": [
+    4,
+    9,
+    7,
+    9,
+    9,
+    8,
+    8,
+    7,
+    9,
+    9,
+    8,
+    8,
+    7,
+    7
+  ],
+  "completion_triggered_release": {
+    "within_5s": {
+      "share": 0.026,
+      "chance": 0.031,
+      "lift": 0.859
+    },
+    "within_30s": {
+      "share": 0.237,
+      "chance": 0.17,
+      "lift": 1.39
+    }
+  },
+  "verdict": "open (bursty releases)",
+  "guidance": "If verdict is completion_triggered or wip_cap(k), model a release controller (e.g. release a new order when WIP < k) instead of an open arrival stream; if releases come in bursts, use the burst/gap parameters, not the mixed mean IAT."
+}

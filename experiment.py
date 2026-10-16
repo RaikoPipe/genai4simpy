@@ -17,6 +17,8 @@ from langchain_core.messages import HumanMessage
 from langgraph.errors import GraphRecursionError
 
 from agent import create_run_agent, _generate_run_name
+from src import telemetry
+from src.telemetry import Telemetry, _agent_from_ns
 
 import sys
 import io
@@ -96,15 +98,14 @@ NO_QUESTIONS_PREAMBLE = """
 You are running in fully automated experiment mode. Adhere to the following rules strictly
 for this entire run — they override any contrary instructions in your system prompt:
 
-1. DO NOT ask the user any questions at any point.
-2. DO NOT pause for confirmations on reports, routing proposals, or data cleaning operations.
-3. DO NOT produce any "QUESTIONS FOR USER" section — omit it entirely from all responses.
-4. For every sub-agent delegation: when the agent returns findings or a draft report,
-   immediately treat it as confirmed and instruct the agent to write the report to disk.
-   Do not relay the report to the user for approval first.
-5. When a sub-agent asks a question, answer it yourself using the context provided below
-   or make the best possible assumption based on available data.
-6. Proceed autonomously through all 5 phases from start to finish without stopping.
+1. DO NOT ask the user any questions and DO NOT pause for confirmations.
+2. For every sub-agent delegation: when the agent returns findings or a draft report,
+   treat it as confirmed and instruct the agent to write the report / spec sections.
+3. When a sub-agent raises a question (QUESTIONS FOR USER), answer it yourself from the
+   context below, from the tool evidence the sub-agent cites, or with the best assumption —
+   and call `log_decision` for EVERY such question (source 'context_file' when the context
+   answers it, 'tool_evidence' when a tool result does, otherwise 'self_answered').
+4. Proceed autonomously through all phases (0–5) without stopping.
 
 === MANUFACTURING SYSTEM CONTEXT ===
 Use the following context as authoritative background knowledge when making decisions
@@ -114,14 +115,15 @@ or answering questions that would otherwise require user input:
 
 === TASK ===
 Execute the complete pipeline:
-- Phase 0: Check existing reports and resume from the earliest incomplete phase.
-- Phase 1: Data analysis — column mapping.
-- Phase 2: Topology analysis — resources, routing, special conditions.
-- Phase 3: Extraction planning — determine which extraction agents to deploy.
-- Phase 4: Parameter extraction — durations, inter-arrival times, quantities, distributions.
-- Phase 5: SimPy code generation, iterative validation, and evaluation.
+- Phase 0: Check existing reports / spec and resume from the earliest incomplete phase.
+- Phase 1: Data analysis — column mapping and log schema.
+- Phase 2: Topology and control-logic discovery — resources, routing, early exits, queue
+  disciplines, release control, intra-case concurrency.
+- Phase 3: Extraction planning.
+- Phase 4: Parameter extraction — service times, failures, arrival process, distribution review.
+- Phase 5: SimPy code generation, deterministic verification, and evaluation.
 
-Complete all phases and produce a fully validated SimPy simulation.
+Complete all phases and produce a verified SimPy simulation.
 """
 
 
@@ -149,7 +151,7 @@ async def run_pipeline(agent, context: str, log_path: Path | None = None) -> tup
     original_stdout = sys.stdout
     if log_path is not None:
         log_path.parent.mkdir(parents=True, exist_ok=True)
-        log_file = open(log_path, "w", encoding="utf-8")
+        log_file = open(log_path, "a", encoding="utf-8")
         sys.stdout = _Tee(original_stdout, log_file)
 
     try:
@@ -159,17 +161,23 @@ async def run_pipeline(agent, context: str, log_path: Path | None = None) -> tup
 
         t_start = time.perf_counter()
 
+        tel = telemetry.CURRENT
         async for event in agent.astream_events(input_data, config=config, version="v2"):
             kind = event.get("event", "")
             name = event.get("name", "")
             metadata = event.get("metadata", {})
-
-            ns = metadata.get("langgraph_checkpoint_ns", "")
-            agent_label = ns.split(":")[0] if ns else "orchestrator"
+            run_id = event.get("run_id", "")
+            agent_label = _agent_from_ns(metadata)
             prefix = f"[{agent_label.upper():<12}]"
 
             if kind == "on_chat_model_start":
+                if tel:
+                    tel.model_start(run_id)
                 print(f"\n{prefix} 🤖 Thinking...", flush=True)
+
+            elif kind == "on_chat_model_end":
+                if tel:
+                    tel.model_end(run_id, agent_label, event["data"].get("output"))
 
             elif kind == "on_chat_model_stream":
                 chunk = event["data"].get("chunk")
@@ -178,12 +186,17 @@ async def run_pipeline(agent, context: str, log_path: Path | None = None) -> tup
 
             elif kind == "on_tool_start":
                 tool_input = event["data"].get("input", {})
-                input_preview = str(tool_input)[:150].replace('\n', ' ')
+                if tel:
+                    tel.tool_start(run_id, agent_label, name, tool_input)
+                input_preview = str(tool_input)[:300].replace('\n', ' ')
                 print(f"\n{prefix} 🛠️  Tool: {name} | Input: {input_preview}...", flush=True)
 
-            elif kind == "on_tool_end":
-                tool_output = str(event["data"].get("output", "")).replace('\n', ' ')
-                preview = (tool_output[:200] + "...") if len(tool_output) > 200 else tool_output
+            elif kind in ("on_tool_end", "on_tool_error"):
+                output = event["data"].get("output", event["data"].get("error", ""))
+                if tel:
+                    tel.tool_end(run_id, agent_label, name, output, error=kind == "on_tool_error")
+                tool_output = str(getattr(output, "content", output)).replace('\n', ' ')
+                preview = (tool_output[:400] + "...") if len(tool_output) > 400 else tool_output
                 print(f"\n{prefix} ✅ Result: {preview}", flush=True)
 
         elapsed = time.perf_counter() - t_start
@@ -259,7 +272,8 @@ def _write_budget_exhausted_report(run_dir: Path, run_name: str, error: str) -> 
 
 
 # --- Experiment Driver ---
-def run_experiment(data_path: str, num_replications: int, context: str, model_name:str) -> None:
+def run_experiment(data_path: str, num_replications: int, context: str, model_name:str,
+                   resume_run: str | None = None) -> None:
     """Run ``num_replications`` replications back-to-back."""
     dataset_name = os.path.basename(os.path.dirname(data_path))
 
@@ -275,7 +289,8 @@ def run_experiment(data_path: str, num_replications: int, context: str, model_na
     print("═" * 60 + "\n")
 
     for i in range(1, num_replications + 1):
-        run_name = _generate_run_name()
+        # Resuming reuses the run directory: completed phases are skipped via the reports / spec.
+        run_name = resume_run or _generate_run_name()
         started_at = datetime.now(timezone.utc).isoformat()
         status: str = "success"
         error: str | None = None
@@ -291,6 +306,8 @@ def run_experiment(data_path: str, num_replications: int, context: str, model_na
         agent = run_artifacts["agent"]
         run_dir = Path(run_artifacts["run_dir"])
         experiment_results_dir = Path(run_artifacts["experiment_results_dir"])
+        model_info = run_artifacts["model_info"]
+        telemetry.CURRENT = Telemetry(str(experiment_results_dir))
 
         print(f"📁 Run directory: {run_dir}")
 
@@ -322,6 +339,10 @@ def run_experiment(data_path: str, num_replications: int, context: str, model_na
                     f.write(f"\n❌ FAILED: {error}\n{tb}")
 
         finished_at = datetime.now(timezone.utc).isoformat()
+        tel_summary = telemetry.CURRENT.summary()
+        telemetry.CURRENT.close()
+        telemetry.CURRENT = None
+        spec_sections = run_artifacts["spec_store"].completeness()
 
         run_info = {
             "run_name": run_name,
@@ -337,7 +358,11 @@ def run_experiment(data_path: str, num_replications: int, context: str, model_na
             "elapsed_seconds": round(elapsed),
             "elapsed_str": elapsed_str,
             "run_dir": str(run_dir),
-            "model": model_name
+            "model": model_info["name"],
+            "model_info": model_info,
+            "telemetry_totals": tel_summary["totals"],
+            "telemetry_events": tel_summary["event_counts"],
+            "spec_sections": spec_sections,
         }
 
         with open(experiment_results_dir / "run_info.json", "w") as f:
@@ -368,7 +393,11 @@ def _parse_args():
     )
     p.add_argument(
         "-m", "--model-name", default=None, type=str,
-        help="Name of the model to run.",
+        help="Served model name (default: the one in logs/vllm_endpoint.env).",
+    )
+    p.add_argument(
+        "--resume-run", default=None,
+        help="Existing run name under output/<dataset>/ to resume (skips completed phases).",
     )
     g = p.add_mutually_exclusive_group()
     g.add_argument(
@@ -398,9 +427,7 @@ if __name__ == "__main__":
         data_path=args.data_path,
         num_replications=args.num_replications,
         context=context,
-        model_name=args.model_name
+        model_name=args.model_name,
+        resume_run=args.resume_run,
     )
 
-# todo
-# - currently pipeline deals with floating point numbers in report, which is a bad idea and can lead to untracked hallucination
-# - instead, the agent should write all intermediate numbers to a json file, and then read from that file when writing the final report. This way we have a single source of truth for all extracted parameters and can easily track any hallucination or drift in the report writing phase.

@@ -1,0 +1,21 @@
+A eager-nice-cow:spec+compiler FAILED: KeyError 'family'
+kpi                                               completed_cases  flow_time_completed_s  time_in_system_all_s  activity_mape  overlapping_steps_per_case  variant_jsd
+block arm                                                                                                                                                             
+A     det-discovery                                          -2.1                   10.4                 -17.9         12.615                       0.000        0.126
+      det-naive                                              93.9                   39.8                  20.0         10.566                       0.000        0.102
+      eager-nice-cow:llm-code                               479.1                   50.7                  32.0         10.029                       0.921        0.099
+      paper                                                 499.9                   84.4                  83.2         12.015                       0.000        0.000
+      wandering-flying-bee:llm-code                         406.6                  106.0                  78.2          9.299                       0.879        0.082
+      wandering-flying-bee:spec+compiler                    406.6                  106.0                  78.2          9.299                       0.879        0.082
+B     det-discovery                                           1.0                    0.9                  -2.6          6.541                       1.242        0.050
+      det-naive                                              76.6                   74.5                  96.6          5.613                       0.000        0.038
+      paper                                                  -8.0                   36.8                  28.7          8.589                       0.000        0.052
+      significant-hilarious-cuscus:llm-code                  10.3                    9.7                   9.1          6.478                       0.926        0.044
+      significant-hilarious-cuscus:spec+compiler              8.4                    5.6                   5.0          7.239                       1.780        0.043
+C     comical-chocolate-wolverine:llm-code                   83.0                   33.1                  42.6          7.544                       1.416        0.090
+      comical-chocolate-wolverine:spec+compiler              83.0                   33.1                  42.6          7.544                       1.416        0.090
+      det-discovery                                          -3.5                   -0.3                 -14.5         11.431                       1.516        0.051
+      det-naive                                              84.0                  144.7                 201.3          9.721                       0.000        0.040
+      foamy-ancient-hornet:llm-code                          -8.1                   35.6                  28.1         10.489                       0.882        0.045
+      foamy-ancient-hornet:spec+compiler                      0.4                   -6.8                 -17.0         10.560                       2.442        0.053
+      paper                                                 -21.6                   31.0                  27.1          8.014                       0.000        0.054

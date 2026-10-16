@@ -1,0 +1,130 @@
+{
+  "passed": true,
+  "checks": [
+    {
+      "name": "no_trace_replay",
+      "passed": true,
+      "detail": "no observed case ids hard-coded"
+    },
+    {
+      "name": "no_file_io",
+      "passed": true,
+      "detail": "no file I/O outside __main__"
+    },
+    {
+      "name": "knobs_read_at_runtime",
+      "passed": true,
+      "detail": "all knobs read inside functions"
+    },
+    {
+      "name": "import_is_side_effect_free",
+      "passed": true,
+      "detail": "import took 4.34s, printed 0 chars (must be ~0: guard demo code with __main__)"
+    },
+    {
+      "name": "symbol:run_single_replication",
+      "passed": true,
+      "detail": "present"
+    },
+    {
+      "name": "symbol:RESOURCE_CAPACITIES",
+      "passed": true,
+      "detail": "present"
+    },
+    {
+      "name": "symbol:SIMULATION_TIME",
+      "passed": true,
+      "detail": "present"
+    },
+    {
+      "name": "symbol:ARRIVAL_RATE_SCALE",
+      "passed": true,
+      "detail": "present"
+    },
+    {
+      "name": "symbol:FAILURES_ENABLED",
+      "passed": true,
+      "detail": "present"
+    },
+    {
+      "name": "capacities_concrete_ints",
+      "passed": true,
+      "detail": "15 resources"
+    },
+    {
+      "name": "run_single_replication_runs",
+      "passed": true,
+      "detail": "300 rows, 0.07s per replication"
+    },
+    {
+      "name": "non_empty",
+      "passed": true,
+      "detail": "300 rows"
+    },
+    {
+      "name": "required_columns",
+      "passed": true,
+      "detail": "all present"
+    },
+    {
+      "name": "v2_columns",
+      "passed": true,
+      "detail": "present"
+    },
+    {
+      "name": "numeric_times",
+      "passed": true,
+      "detail": "numeric seconds"
+    },
+    {
+      "name": "end_ge_start",
+      "passed": true,
+      "detail": "0 rows with operation_end_time < time:timestamp"
+    },
+    {
+      "name": "queue_enter_le_start",
+      "passed": true,
+      "detail": "0 rows with queue_enter > service start"
+    },
+    {
+      "name": "case_arrival_le_first_start",
+      "passed": true,
+      "detail": "0 cases released after their first start"
+    },
+    {
+      "name": "states_valid",
+      "passed": true,
+      "detail": "states ['failure', 'success']"
+    },
+    {
+      "name": "same_seed_reproducible",
+      "passed": true,
+      "detail": "seed 1 twice -> identical"
+    },
+    {
+      "name": "different_seeds_differ",
+      "passed": true,
+      "detail": "seeds 1/2 differ"
+    },
+    {
+      "name": "resources_in_capacities",
+      "passed": true,
+      "detail": "ok"
+    },
+    {
+      "name": "vocabulary:activity",
+      "passed": true,
+      "detail": "matches spec"
+    },
+    {
+      "name": "vocabulary:variant",
+      "passed": true,
+      "detail": "matches spec"
+    },
+    {
+      "name": "capacities_match_spec",
+      "passed": true,
+      "detail": "match"
+    }
+  ]
+}

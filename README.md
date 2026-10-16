@@ -154,8 +154,7 @@ This repository ships the full experimental harness used in the WSC paper: an **
 python experiment.py \
   -d data/fischertechnik_lab_A/block-A.csv \
   -n 1 \
-  -m qwen3.6:27b-bf16 \
-  --context-file data/fischertechnik_lab_A/user_context.md
+  --context-file data/fischertechnik_lab_A/user_context.md   # -m <served model> optional
 ```
 
 | Flag | Description |
@@ -258,16 +257,38 @@ M=300 python analysis/counterfactual.py
 
 ## Configuration
 
-| Location | Parameter | Description |
+The model is served by any OpenAI-compatible server. `scripts/vllm_qwen38.sbatch` starts vLLM
+(Qwen3.8-27B; BF16 on ≥70 GB GPUs, AWQ-INT4 otherwise; MTP speculative decoding) and writes
+`logs/vllm_endpoint.env`, which `agent.py` reads. `LLM_BASE_URL` / `LLM_API_KEY` override it.
+
+| Variable | Default | Meaning |
 |---|---|---|
-| `agent.py` (`create_run_agent`) | `model_name` | Model tag for orchestration (pass via `experiment.py -m`, e.g. `qwen3.6:27b-bf16`) |
-| `agent.py` (`create_run_agent`) | `base_url` | Inference server URL (point at your local Ollama instance, e.g. `http://localhost:11434`) |
-| `agent.py` | `max_output_tokens=64000` | Token budget for code generation |
-| `graph.py` | `max_iterations = 5` | Max code repair loop iterations |
-| `tools.py` | `REPORTS_DIR = "reports"` | Output directory for phase reports |
+| `CODEGEN_MODE` | `compiler` | `compiler`: simulation.py is compiled from the spec (`src/genai4simpy_agent/compiler.py`); `llm`: the coding agent writes it |
+| `LLM_TEMPERATURE` / `LLM_TOP_P` / `LLM_TOP_K` | 0.6 / 0.95 / 20 | sampling (Qwen thinking-mode defaults) |
+| `LLM_MAX_TOKENS` | 49152 | output cap per call (truncated calls are re-issued once with a steering note) |
+| `LLM_THINKING_BUDGET` | 8192 | vLLM `thinking_token_budget` per call |
+| `CONTEXT_CLEAR_TRIGGER` | 40000 | sub-agents clear older tool results above this many tokens |
+| `RUN_PYTHON_LIMIT` | 8 | `run_python` calls per sub-agent invocation |
 
+`experiment.py --resume-run <run-name>` continues an existing run directory (completed phases are skipped).
+`scripts/run_llm_experiments.sh [compiler|llm] A B C` runs blocks in parallel (`RESUME_<B>=<run>` to resume).
 
----
+### Pipeline artefacts (per run)
+- `reports/simulation_spec.json` — typed spec (single source of truth for all numbers) and its generated view `simulation_spec.md`
+- `reports/evidence/*.json` — full results of the deterministic tools (provenance)
+- `reports/hitl_log.jsonl` — every question answered without the user, with answer, source and category
+- `experiment_results/tool_calls.jsonl`, `telemetry*.json` — untruncated tool I/O, tokens, latency, retries, guard events
+
+### Deterministic tools added
+- Discovery (`src/data_extraction_tools/discovery.py`, `routing.py`): `set_log_schema`, `detect_censoring`,
+  `discover_variant_routings`, `test_dispatching_rules`, `decompose_waiting_times`, `detect_release_control`,
+  `detect_intra_case_concurrency`
+- Spec (`src/genai4simpy_agent/spec.py`, `spec_drafting.py`): `read_spec`, `write_spec_section` (validated, merge),
+  `draft_topology_spec`, `draft_activities_spec`, `draft_arrivals_spec`, `check_spec_against_evidence`
+- Verification (`src/genai4simpy_agent/verification.py`): `run_contract_test` (contract v2), `run_behavioural_check`
+  (training-window KPIs, distances, deterministic verdict), `run_metamorphic_tests`
+- References: `analysis/deterministic_baseline.py` (LLM-free spec → compiler), `analysis/compare_runs.py`,
+  `analysis/mutation_test.py`
 
 ## Tech Stack
 

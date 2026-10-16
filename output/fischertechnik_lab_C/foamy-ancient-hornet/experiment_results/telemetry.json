@@ -1,0 +1,75 @@
+{
+  "wall_clock_s": 6211.8,
+  "totals": {
+    "model_calls": 57.0,
+    "model_latency_s": 5600.66,
+    "input_tokens": 0.0,
+    "output_tokens": 0.0,
+    "reasoning_tokens": 0.0,
+    "tool_calls": 73.0,
+    "tool_latency_s": 6365.83,
+    "tool_errors": 9.0
+  },
+  "per_agent": {
+    "model": {
+      "model_calls": 6.0,
+      "model_latency_s": 70.35,
+      "input_tokens": 0.0,
+      "output_tokens": 0.0,
+      "reasoning_tokens": 0.0
+    },
+    "tools": {
+      "tool_calls": 9.0,
+      "tool_latency_s": 6141.1,
+      "tool_errors": 1.0
+    },
+    "data-analysis-agent": {
+      "model_calls": 13.0,
+      "model_latency_s": 520.76,
+      "input_tokens": 0.0,
+      "output_tokens": 0.0,
+      "reasoning_tokens": 0.0,
+      "tool_calls": 14.0,
+      "tool_latency_s": 14.67,
+      "tool_errors": 2.0
+    },
+    "topology-analysis-agent": {
+      "model_calls": 38.0,
+      "model_latency_s": 5009.55,
+      "input_tokens": 0.0,
+      "output_tokens": 0.0,
+      "reasoning_tokens": 0.0,
+      "tool_calls": 50.0,
+      "tool_latency_s": 210.05,
+      "tool_errors": 6.0
+    }
+  },
+  "peak_input_tokens": {
+    "model": 0,
+    "data-analysis-agent": 0,
+    "topology-analysis-agent": 0
+  },
+  "event_counts": {
+    "model_retry": 2
+  },
+  "events": [
+    {
+      "ts": "2026-10-14T18:27:13.161028+00:00",
+      "kind": "model_retry",
+      "error": "StreamChunkTimeoutError",
+      "transient": false,
+      "attempt": 1,
+      "budget": 3,
+      "detail": "No streaming chunk received for 120.0s (model=qwen3.8-27b-int4, chunks_received=42). The connection may be alive at the TCP layer but is not producing content. Tune or disable via the `stream_chunk_timeout` constructor kwarg (set to None or 0 to disable) or the `LANGCHAIN_OPENAI_STREAM_CHUNK_TIMEOUT"
+    },
+    {
+      "ts": "2026-10-14T18:29:19.695994+00:00",
+      "kind": "model_retry",
+      "error": "StreamChunkTimeoutError",
+      "transient": false,
+      "attempt": 2,
+      "budget": 3,
+      "detail": "No streaming chunk received for 120.0s (model=qwen3.8-27b-int4, chunks_received=43). The connection may be alive at the TCP layer but is not producing content. Tune or disable via the `stream_chunk_timeout` constructor kwarg (set to None or 0 to disable) or the `LANGCHAIN_OPENAI_STREAM_CHUNK_TIMEOUT"
+    }
+  ]
+}

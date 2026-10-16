@@ -1,0 +1,50 @@
+{
+  "ok": true,
+  "replications": 10,
+  "T_s": 5461.506544,
+  "passed": false,
+  "relations": [
+    {
+      "relation": "MR1 +1 capacity at bottleneck vgr_1 (util 0.64) must not increase waiting/flow time",
+      "status": "pass",
+      "base": {
+        "wait": 41.5,
+        "flow": 591.0
+      },
+      "followup": {
+        "wait": 32.3,
+        "flow": 403.5
+      }
+    },
+    {
+      "relation": "MR2 ARRIVAL_RATE_SCALE=1.5 must not decrease cases entered or mean WIP",
+      "status": "pass",
+      "base": {
+        "cases_entered": 38.2,
+        "wip": 5.87
+      },
+      "followup": {
+        "cases_entered": 66.7,
+        "wip": 18.97
+      }
+    },
+    {
+      "relation": "MR3 FAILURES_ENABLED=False -> failure rate 0, flow time not increased",
+      "status": "fail",
+      "base": {
+        "fail": 0.015,
+        "flow": 591.046
+      },
+      "followup": {
+        "fail": 0.0,
+        "flow": 902.191
+      }
+    },
+    {
+      "relation": "MR4 SIMULATION_TIME x2 -> cases entered roughly scales (>=1.5x)",
+      "status": "pass",
+      "base": 38.2,
+      "followup": 77.0
+    }
+  ]
+}

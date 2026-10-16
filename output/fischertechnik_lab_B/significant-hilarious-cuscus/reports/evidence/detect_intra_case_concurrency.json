@@ -1,0 +1,39 @@
+{
+  "overlapping_steps_per_case_all": 0.974,
+  "share_cases_with_overlap": 0.684,
+  "share_steps_overlapping": 0.08,
+  "top_overlapping_pairs": [
+    {
+      "previous": "/hbw/store_empty_bucket",
+      "next": "/ov/burn",
+      "count": 12,
+      "mean_overlap_s": 34.5
+    },
+    {
+      "previous": "/hbw/store_empty_bucket",
+      "next": "/vgr/pick_up_and_transport",
+      "count": 11,
+      "mean_overlap_s": 25.3
+    },
+    {
+      "previous": "/hbw/get_empty_bucket",
+      "next": "/vgr/pick_up_and_transport",
+      "count": 6,
+      "mean_overlap_s": 31.4
+    },
+    {
+      "previous": "/vgr/pick_up_and_transport",
+      "next": "/hbw/get_empty_bucket",
+      "count": 5,
+      "mean_overlap_s": 20.7
+    },
+    {
+      "previous": "/hbw/store_empty_bucket",
+      "next": "/wt/pick_up_and_transport",
+      "count": 3,
+      "mean_overlap_s": 21.7
+    }
+  ],
+  "overlapping_steps_per_completed_case": 1.571,
+  "guidance": "If overlap is material (> ~0.3 steps per case), the next step of a case is requested before the previous one releases its resource (e.g. a transporter is called while the machine still works). Model these steps as concurrent SimPy processes (or request the next resource before releasing the current one), not as a strictly sequential chain."
+}

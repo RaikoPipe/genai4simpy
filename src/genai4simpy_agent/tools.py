@@ -1,8 +1,11 @@
+import json
+import os
+import resource
 import subprocess
-from langchain_core.tools import tool
-import os, sys
+import sys
+from datetime import datetime, timezone
 
-from src.simpy_code_workflow.context_engineering.docs_knowledge_retriever import SimPyKnowledgeRetriever
+from langchain_core.tools import tool
 
 # --- Report path constants ---
 REPORTS_DIR = "output/generated_reports"
@@ -28,40 +31,95 @@ EXTRACTION_SUB_REPORTS = [
     DISTRIBUTION_FITTING_REPORT,
 ]
 
-KDE_QUANTILES_DIR = "output/generated_reports/kde_quantiles"
+# Resource limits for code the model writes and runs (run_python).
+_RUN_PYTHON_MEM_BYTES = 8 * 1024**3
+_SAFE_ENV_KEYS = ("PATH", "LD_LIBRARY_PATH", "LANG", "LC_ALL", "TZ", "OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS")
+
+
+def _limit_child(cpu_seconds: int):
+    """preexec_fn: cap CPU time and address space, no core dumps, own process group."""
+    def _apply():
+        os.setsid()
+        resource.setrlimit(resource.RLIMIT_CPU, (cpu_seconds, cpu_seconds))
+        resource.setrlimit(resource.RLIMIT_AS, (_RUN_PYTHON_MEM_BYTES, _RUN_PYTHON_MEM_BYTES))
+        resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
+    return _apply
 
 
 def make_run_python(timeout: int = 360, work_dir: str = "work_dir"):
+    """Factory for a restricted, stateless Python runner.
 
+    The code runs with the same interpreter as the pipeline (``sys.executable``,
+    so the environment matches), in isolated mode (``-I``: no user site, no
+    PYTHONPATH, script dir not on sys.path), with a scrubbed environment
+    (no API keys), CPU-time / memory limits, and ``work_dir`` as the current
+    directory. This is a guard-rail, not a security boundary: for untrusted
+    deployments run the pipeline inside a container with a read-only data mount.
+    """
     _cwd = os.getcwd()
-    _dataset_path = os.path.join(_cwd, work_dir, "eventlog.parquet")
-    _cleaned_path = os.path.join(_cwd, work_dir, "eventlog_cleaned.parquet")
+    _work = os.path.join(_cwd, work_dir)
+    _dataset_path = os.path.join(_work, "eventlog.parquet")
+    _cleaned_path = os.path.join(_work, "eventlog_cleaned.parquet")
+    _env = {k: os.environ[k] for k in _SAFE_ENV_KEYS if k in os.environ}
+    _env.update(HOME=_work, MPLBACKEND="Agg", PYTHONHASHSEED="0")
 
     @tool(description=(
-        f"Execute Python code locally and return the combined stdout and stderr. "
-        f"Use this to explore the dataset, compute statistics, test logic, or run simulation code. "
+        f"Execute Python code and return the combined stdout and stderr. "
+        f"Use only when no dedicated tool covers the need. "
         f"The raw dataset is at: {_dataset_path}. "
-        f"If the data analyst has already cleaned the dataset, a cleaned version is available at: "
-        f"{_cleaned_path} — prefer this over the raw file when it exists "
+        f"A cleaned version may exist at {_cleaned_path} — prefer it when it exists "
         f"(check with os.path.exists). Load with pd.read_parquet(<path>). "
-        f"Each call runs in a fresh subprocess with no shared state. "
-        f"Store intermediate results to files if they need to persist across calls."
+        f"Each call runs in a fresh, resource-limited subprocess with no shared state and the "
+        f"run's work_files directory as current directory; store intermediate results there."
     ))
     def run_python(code: str) -> str:
+        os.makedirs(_work, exist_ok=True)
         try:
             result = subprocess.run(
-                ["python", "-c", code],
-                capture_output=True, text=True, timeout=timeout
+                [sys.executable, "-I", "-c", code],
+                capture_output=True, text=True, timeout=timeout, cwd=_work, env=_env,
+                preexec_fn=_limit_child(timeout),
             )
-            return result.stdout + result.stderr or "(no output)"
         except subprocess.TimeoutExpired:
             return (
                 f"ERROR: Script timed out after {timeout} seconds. "
-                "The code likely has an infinite loop or the workload is too large. "
-                "Reduce the simulation duration or add a progress check."
+                "The code likely has an infinite loop or the workload is too large."
             )
+        out = (result.stdout + result.stderr) or "(no output)"
+        if len(out) > 20000:
+            out = out[:10000] + f"\n... [{len(out) - 20000} chars truncated] ...\n" + out[-10000:]
+        return out
 
     return run_python
+
+
+def make_log_decision_tool(log_path: str, agent_name: str):
+    """Factory for the HITL decision log (questions, answers and their source).
+
+    In autonomous mode the orchestrator answers sub-agent questions itself; without
+    a log those decisions are invisible. Every question/answer pair is appended to
+    a JSONL file so that RQ3 (what needs human input?) can be measured.
+    """
+    _path = os.path.join(os.getcwd(), log_path)
+
+    @tool(description=(
+        "Log a question that would normally go to the user, together with the answer used and "
+        "where it came from. Call this for EVERY question you answer without the user "
+        "(autonomous mode), and for every user answer you receive. "
+        "source: 'user' | 'context_file' | 'self_answered' | 'tool_evidence'. "
+        "category: 'data_semantics' (what a column/value means) | 'modelling_decision' "
+        "(how to represent something) | 'parameter' (a number) | 'scope'."
+    ))
+    def log_decision(question: str, answer: str, source: str, category: str,
+                     evidence: str | None = None) -> str:
+        os.makedirs(os.path.dirname(_path), exist_ok=True)
+        rec = {"ts": datetime.now(timezone.utc).isoformat(), "agent": agent_name, "question": question,
+               "answer": answer, "source": source, "category": category, "evidence": evidence}
+        with open(_path, "a", encoding="utf-8") as f:
+            f.write(json.dumps(rec) + "\n")
+        return "logged"
+
+    return log_decision
 
 
 def make_write_report(report_name: str, output_dir: str = REPORTS_DIR):
@@ -112,32 +170,6 @@ def make_read_report(report_name: str, output_dir: str = REPORTS_DIR):
     return read_report
 
 
-def make_read_merged_extraction_report(output_dir: str = REPORTS_DIR):
-    """Factory returning a read tool that merges all extraction sub-generated_reports."""
-
-    _output_dir = os.path.join(os.getcwd(), output_dir)
-
-    @tool(description=(
-        "Read the merged parameter extraction report. "
-        "Automatically combines all extraction sub-agent generated_reports "
-        "(durations/processing times, inter-arrival times, quantities/quality, "
-        "distribution fitting) into a single document."
-    ))
-    def read_parameter_extraction_report() -> str:
-        sections = []
-        for report_name in EXTRACTION_SUB_REPORTS:
-            filepath = os.path.join(_output_dir, f"{report_name}.md")
-            if os.path.exists(filepath):
-                with open(filepath, "r", encoding="utf-8") as f:
-                    sections.append(f.read())
-            else:
-                sections.append(f"<!-- {report_name}: not yet available -->")
-        return "\n\n---\n\n".join(sections)
-
-    read_parameter_extraction_report.name = "read_parameter_extraction_report"
-    return read_parameter_extraction_report
-
-
 def make_read_simulation_code(sim_dir: str = "output/generated_simpy_models"):
     """Factory returning a scoped read tool for simulation.py with optional line-range pagination."""
 
@@ -181,40 +213,6 @@ def make_read_simulation_code(sim_dir: str = "output/generated_simpy_models"):
 
     return read_simulation_code
 
-
-def make_simpy_knowledge_tool():
-    """Factory returning a tool that retrieves SimPy documentation via semantic search."""
-
-    # Building the retriever downloads HuggingFace embeddings and constructs a
-    # Chroma vectorstore. This runs at agent-construction time (outside the agent
-    # loop), so a network/embedding failure here aborts the whole run with no
-    # chance for the model to self-heal. Surface a clear, actionable message.
-    try:
-        retriever = SimPyKnowledgeRetriever()
-    except Exception as exc:
-        raise RuntimeError(
-            f"Failed to build the SimPy knowledge retriever "
-            f"({type(exc).__name__}: {exc}). This requires downloading the HuggingFace "
-            f"embedding model and building a Chroma vectorstore — check network access "
-            f"and that 'sentence-transformers' and 'chromadb' are installed."
-        ) from exc
-
-    @tool(description=(
-        "Retrieve SimPy documentation and examples relevant to a query. "
-        "Always includes the full API reference. Additionally retrieves "
-        "guides and examples via semantic search. "
-        "Use this before writing simulation code to understand SimPy patterns."
-    ))
-    def retrieve_simpy_docs(query: str) -> str:
-        """Search SimPy docs for relevant API reference, guides, and examples.
-
-        Args:
-            query: Natural language description of what you need
-                   (e.g. 'how to create a Resource with limited capacity').
-        """
-        return retriever.retrieve(query)
-
-    return retrieve_simpy_docs
 
 def make_write_simulation_code(sim_dir: str = "output/generated_simpy_models"):
     """Factory returning a write tool that creates simulation.py from scratch."""
@@ -306,14 +304,14 @@ def make_edit_simulation_code(sim_dir: str = "output/generated_simpy_models"):
     return edit_simulation_code
 
 def make_execute_simulation(sim_dir: str = "output/generated_simpy_models", timeout: int = 600):
-    """Factory returning a tool that executes generated_simpy_models/simulation.py."""
+    """Factory returning a tool that executes the run's simulation.py."""
 
     _sim_path = os.path.join(os.getcwd(), sim_dir, "simulation.py")
 
     @tool(description=(
-        "Execute the generated SimPy simulation at generated_simpy_models/simulation.py "
-        "and return the combined stdout and stderr. "
-        "Use this to run the simulation and observe its output or catch runtime errors. "
+        "Execute simulation.py as a script (its __main__ block) and return stdout/stderr. "
+        "Use it to catch runtime errors; use run_contract_test / run_behavioural_check to "
+        "verify the model itself. "
         f"Script location: {_sim_path}"
     ))
     def execute_simulation() -> str:

@@ -1,0 +1,252 @@
+{
+  "n_steps_with_enabled_time": 461,
+  "overall": {
+    "n": 461,
+    "mean_wait_s": 41.0,
+    "p90_wait_s": 66.6,
+    "share_contention": 0.295,
+    "share_prioritization": 0.226,
+    "share_extraneous": 0.479
+  },
+  "by_resource_class": {
+    "dm": {
+      "n": 8,
+      "mean_wait_s": 2.3,
+      "p90_wait_s": 2.8,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "hbw": {
+      "n": 104,
+      "mean_wait_s": 144.8,
+      "p90_wait_s": 525.3,
+      "share_contention": 0.275,
+      "share_prioritization": 0.283,
+      "share_extraneous": 0.442
+    },
+    "hw": {
+      "n": 30,
+      "mean_wait_s": 2.9,
+      "p90_wait_s": 4.7,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "mm": {
+      "n": 54,
+      "mean_wait_s": 4.9,
+      "p90_wait_s": 5.9,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "ov": {
+      "n": 47,
+      "mean_wait_s": 5.0,
+      "p90_wait_s": 6.3,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "pm": {
+      "n": 13,
+      "mean_wait_s": 1.9,
+      "p90_wait_s": 2.4,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "sm": {
+      "n": 37,
+      "mean_wait_s": 2.3,
+      "p90_wait_s": 3.0,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "vgr": {
+      "n": 127,
+      "mean_wait_s": 23.0,
+      "p90_wait_s": 65.0,
+      "share_contention": 0.495,
+      "share_prioritization": 0.0,
+      "share_extraneous": 0.505
+    },
+    "wt": {
+      "n": 41,
+      "mean_wait_s": 4.7,
+      "p90_wait_s": 5.7,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    }
+  },
+  "by_activity_top": {
+    "/hbw/unload": {
+      "n": 38,
+      "mean_wait_s": 385.6,
+      "p90_wait_s": 700.0,
+      "share_contention": 0.279,
+      "share_prioritization": 0.288,
+      "share_extraneous": 0.434
+    },
+    "/vgr/pick_up_and_transport": {
+      "n": 127,
+      "mean_wait_s": 23.0,
+      "p90_wait_s": 65.0,
+      "share_contention": 0.495,
+      "share_prioritization": 0.0,
+      "share_extraneous": 0.505
+    },
+    "/hbw/store_empty_bucket": {
+      "n": 37,
+      "mean_wait_s": 7.1,
+      "p90_wait_s": 5.2,
+      "share_contention": 0.0,
+      "share_prioritization": 0.185,
+      "share_extraneous": 0.815
+    },
+    "/wt/pick_up_and_transport": {
+      "n": 41,
+      "mean_wait_s": 4.7,
+      "p90_wait_s": 5.7,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "/ov/burn": {
+      "n": 33,
+      "mean_wait_s": 5.1,
+      "p90_wait_s": 6.4,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "/mm/deburr": {
+      "n": 25,
+      "mean_wait_s": 4.9,
+      "p90_wait_s": 6.0,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "/hbw/get_empty_bucket": {
+      "n": 15,
+      "mean_wait_s": 6.1,
+      "p90_wait_s": 9.8,
+      "share_contention": 0.548,
+      "share_prioritization": 0.0,
+      "share_extraneous": 0.452
+    },
+    "/mm/mill": {
+      "n": 19,
+      "mean_wait_s": 4.7,
+      "p90_wait_s": 5.7,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "/hw/human_review": {
+      "n": 30,
+      "mean_wait_s": 2.9,
+      "p90_wait_s": 4.7,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "/ov/temper": {
+      "n": 14,
+      "mean_wait_s": 4.9,
+      "p90_wait_s": 6.0,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "/sm/transport": {
+      "n": 21,
+      "mean_wait_s": 2.3,
+      "p90_wait_s": 2.9,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "/hbw/store": {
+      "n": 14,
+      "mean_wait_s": 3.4,
+      "p90_wait_s": 5.1,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "/sm/sort": {
+      "n": 16,
+      "mean_wait_s": 2.3,
+      "p90_wait_s": 3.1,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "/mm/drill": {
+      "n": 7,
+      "mean_wait_s": 4.6,
+      "p90_wait_s": 5.3,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "/mm/transport_from_to": {
+      "n": 3,
+      "mean_wait_s": 6.1,
+      "p90_wait_s": 7.4,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "/pm/punch_ribbing": {
+      "n": 5,
+      "mean_wait_s": 2.2,
+      "p90_wait_s": 2.7,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "/dm/cylindrical_drill": {
+      "n": 4,
+      "mean_wait_s": 2.4,
+      "p90_wait_s": 2.9,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "/pm/punch_recesses": {
+      "n": 5,
+      "mean_wait_s": 1.8,
+      "p90_wait_s": 2.1,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "/dm/lower": {
+      "n": 4,
+      "mean_wait_s": 2.2,
+      "p90_wait_s": 2.5,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    },
+    "/pm/punch_gill": {
+      "n": 3,
+      "mean_wait_s": 1.6,
+      "p90_wait_s": 1.6,
+      "share_contention": 0.0,
+      "share_prioritization": 0.0,
+      "share_extraneous": 1.0
+    }
+  },
+  "findings": [
+    "hbw: 28% of waiting is caused by later-enabled steps overtaking -> queue is NOT FIFO; run test_dispatching_rules for 'hbw'.",
+    "ov: 100% of waiting happens while the resource is idle -> delay is not caused by this resource (hand-off/transport/release control).",
+    "vgr: 50% of waiting happens while the resource is idle -> delay is not caused by this resource (hand-off/transport/release control)."
+  ]
+}

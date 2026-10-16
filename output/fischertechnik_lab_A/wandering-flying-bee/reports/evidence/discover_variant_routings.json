@@ -1,0 +1,714 @@
+{
+  "terminal_activity": "/hbw/store",
+  "cases_used": 15,
+  "complete_cases": 3,
+  "censored_excluded": 3,
+  "variants": {
+    "WF_101": {
+      "cases": 2,
+      "share_of_released": 0.1333,
+      "completed": 1,
+      "early_exit_probability": 0.5,
+      "early_exit_points": {
+        "/hw/human_review (success)": 1
+      },
+      "early_exit_after_n_steps": {
+        "12": 1.0
+      },
+      "failed_attempts": 0,
+      "main_sequence": [
+        "/hbw/unload",
+        "/vgr/pick_up_and_transport",
+        "/hbw/store_empty_bucket",
+        "/vgr/pick_up_and_transport",
+        "/ov/burn",
+        "/ov/temper",
+        "/mm/mill",
+        "/mm/deburr",
+        "/sm/sort",
+        "/vgr/pick_up_and_transport",
+        "/hw/human_review",
+        "/vgr/pick_up_and_transport",
+        "/hbw/get_empty_bucket",
+        "/vgr/pick_up_and_transport",
+        "/hbw/store"
+      ],
+      "main_sequence_share": 1.0,
+      "resources_by_step": [
+        {
+          "hbw_2": 1.0
+        },
+        {
+          "vgr_2": 1.0
+        },
+        {
+          "hbw_2": 1.0
+        },
+        {
+          "vgr_1": 1.0
+        },
+        {
+          "ov_1": 1.0
+        },
+        {
+          "ov_1": 1.0
+        },
+        {
+          "mm_1": 1.0
+        },
+        {
+          "mm_1": 1.0
+        },
+        {
+          "sm_1": 1.0
+        },
+        {
+          "vgr_1": 1.0
+        },
+        {
+          "hw_1": 1.0
+        },
+        {
+          "vgr_1": 1.0
+        },
+        {
+          "hbw_1": 1.0
+        },
+        {
+          "vgr_1": 1.0
+        },
+        {
+          "hbw_1": 1.0
+        }
+      ],
+      "other_sequences": [],
+      "step_presence_complete_cases": {
+        "/hbw/unload": 1.0,
+        "/vgr/pick_up_and_transport": 1.0,
+        "/hbw/get_empty_bucket": 1.0,
+        "/mm/mill": 1.0,
+        "/mm/deburr": 1.0,
+        "/sm/sort": 1.0,
+        "/hw/human_review": 1.0,
+        "/ov/temper": 1.0,
+        "/hbw/store": 1.0,
+        "/hbw/store_empty_bucket": 1.0,
+        "/ov/burn": 1.0
+      }
+    },
+    "WF_102": {
+      "cases": 2,
+      "share_of_released": 0.1333,
+      "completed": 1,
+      "early_exit_probability": 0.5,
+      "early_exit_points": {
+        "/hw/human_review (success)": 1
+      },
+      "early_exit_after_n_steps": {
+        "10": 1.0
+      },
+      "failed_attempts": 0,
+      "main_sequence": [
+        "/hbw/unload",
+        "/vgr/pick_up_and_transport",
+        "/wt/pick_up_and_transport",
+        "/mm/drill",
+        "/sm/transport",
+        "/dm/lower",
+        "/hbw/store_empty_bucket",
+        "/vgr/pick_up_and_transport",
+        "/hw/human_review",
+        "/vgr/pick_up_and_transport",
+        "/hbw/get_empty_bucket",
+        "/vgr/pick_up_and_transport",
+        "/hbw/store"
+      ],
+      "main_sequence_share": 1.0,
+      "resources_by_step": [
+        {
+          "hbw_2": 1.0
+        },
+        {
+          "vgr_2": 1.0
+        },
+        {
+          "wt_2": 1.0
+        },
+        {
+          "mm_2": 1.0
+        },
+        {
+          "sm_2": 1.0
+        },
+        {
+          "dm_2": 1.0
+        },
+        {
+          "hbw_2": 1.0
+        },
+        {
+          "vgr_1": 1.0
+        },
+        {
+          "hw_1": 1.0
+        },
+        {
+          "vgr_1": 1.0
+        },
+        {
+          "hbw_1": 1.0
+        },
+        {
+          "vgr_1": 1.0
+        },
+        {
+          "hbw_1": 1.0
+        }
+      ],
+      "other_sequences": [],
+      "step_presence_complete_cases": {
+        "/hbw/unload": 1.0,
+        "/vgr/pick_up_and_transport": 1.0,
+        "/hbw/get_empty_bucket": 1.0,
+        "/wt/pick_up_and_transport": 1.0,
+        "/sm/transport": 1.0,
+        "/dm/lower": 1.0,
+        "/hw/human_review": 1.0,
+        "/hbw/store": 1.0,
+        "/hbw/store_empty_bucket": 1.0,
+        "/mm/drill": 1.0
+      }
+    },
+    "WF_103": {
+      "cases": 2,
+      "share_of_released": 0.1333,
+      "completed": 0,
+      "early_exit_probability": 1.0,
+      "early_exit_points": {
+        "/vgr/pick_up_and_transport (failure)": 1,
+        "/hbw/get_empty_bucket (success)": 1
+      },
+      "early_exit_after_n_steps": {
+        "13": 0.5,
+        "14": 0.5
+      },
+      "failed_attempts": 3,
+      "main_sequence": [
+        "/hbw/unload",
+        "/vgr/pick_up_and_transport",
+        "/hbw/store_empty_bucket",
+        "/vgr/pick_up_and_transport",
+        "/ov/burn",
+        "/ov/temper",
+        "/wt/pick_up_and_transport",
+        "/mm/mill",
+        "/mm/deburr",
+        "/sm/transport",
+        "/pm/punch_recesses",
+        "/vgr/pick_up_and_transport",
+        "/hw/human_review",
+        "/hbw/get_empty_bucket"
+      ],
+      "main_sequence_share": null,
+      "resources_by_step": [
+        {
+          "hbw_2": 1.0
+        },
+        {
+          "vgr_2": 1.0
+        },
+        {
+          "hbw_2": 1.0
+        },
+        {
+          "vgr_1": 1.0
+        },
+        {
+          "ov_1": 1.0
+        },
+        {
+          "ov_1": 1.0
+        },
+        {
+          "wt_1": 1.0
+        },
+        {
+          "mm_1": 1.0
+        },
+        {
+          "mm_1": 1.0
+        },
+        {
+          "sm_1": 1.0
+        },
+        {
+          "pm_1": 1.0
+        },
+        {
+          "vgr_1": 1.0
+        },
+        {
+          "hw_1": 1.0
+        },
+        {
+          "hbw_1": 1.0
+        }
+      ],
+      "note": "no complete case of this variant; main_sequence is the longest observed (partial) sequence"
+    },
+    "WF_104": {
+      "cases": 1,
+      "share_of_released": 0.0667,
+      "completed": 0,
+      "early_exit_probability": 1.0,
+      "early_exit_points": {
+        "/vgr/pick_up_and_transport (failure)": 1
+      },
+      "early_exit_after_n_steps": {
+        "15": 1.0
+      },
+      "failed_attempts": 1,
+      "main_sequence": [
+        "/vgr/pick_up_and_transport",
+        "/hbw/store_empty_bucket",
+        "/ov/burn",
+        "/wt/pick_up_and_transport",
+        "/mm/mill",
+        "/sm/sort",
+        "/vgr/pick_up_and_transport",
+        "/vgr/pick_up_and_transport",
+        "/wt/pick_up_and_transport",
+        "/mm/deburr",
+        "/sm/transport",
+        "/pm/punch_gill",
+        "/vgr/pick_up_and_transport",
+        "/hw/human_review",
+        "/hbw/get_empty_bucket"
+      ],
+      "main_sequence_share": null,
+      "resources_by_step": [
+        {
+          "vgr_2": 1.0
+        },
+        {
+          "hbw_2": 1.0
+        },
+        {
+          "ov_2": 1.0
+        },
+        {
+          "wt_2": 1.0
+        },
+        {
+          "mm_2": 1.0
+        },
+        {
+          "sm_2": 1.0
+        },
+        {
+          "vgr_2": 1.0
+        },
+        {
+          "vgr_1": 1.0
+        },
+        {
+          "wt_1": 1.0
+        },
+        {
+          "mm_1": 1.0
+        },
+        {
+          "sm_1": 1.0
+        },
+        {
+          "pm_1": 1.0
+        },
+        {
+          "vgr_1": 1.0
+        },
+        {
+          "hw_1": 1.0
+        },
+        {
+          "hbw_1": 1.0
+        }
+      ],
+      "note": "no complete case of this variant; main_sequence is the longest observed (partial) sequence"
+    },
+    "WF_105": {
+      "cases": 2,
+      "share_of_released": 0.1333,
+      "completed": 0,
+      "early_exit_probability": 1.0,
+      "early_exit_points": {
+        "/vgr/pick_up_and_transport (success)": 1,
+        "/hw/human_review (success)": 1
+      },
+      "early_exit_after_n_steps": {
+        "9": 0.5,
+        "12": 0.5
+      },
+      "failed_attempts": 1,
+      "main_sequence": [
+        "/hbw/unload",
+        "/vgr/pick_up_and_transport",
+        "/hbw/store_empty_bucket",
+        "/vgr/pick_up_and_transport",
+        "/ov/burn",
+        "/wt/pick_up_and_transport",
+        "/mm/deburr",
+        "/sm/sort",
+        "/vgr/pick_up_and_transport",
+        "/hw/human_review",
+        "/hbw/get_empty_bucket",
+        "/vgr/pick_up_and_transport"
+      ],
+      "main_sequence_share": null,
+      "resources_by_step": [
+        {
+          "hbw_2": 1.0
+        },
+        {
+          "vgr_2": 1.0
+        },
+        {
+          "hbw_2": 1.0
+        },
+        {
+          "vgr_1": 1.0
+        },
+        {
+          "ov_1": 1.0
+        },
+        {
+          "wt_1": 1.0
+        },
+        {
+          "mm_1": 1.0
+        },
+        {
+          "sm_1": 1.0
+        },
+        {
+          "vgr_1": 1.0
+        },
+        {
+          "hw_1": 1.0
+        },
+        {
+          "hbw_1": 1.0
+        },
+        {
+          "vgr_1": 1.0
+        }
+      ],
+      "note": "no complete case of this variant; main_sequence is the longest observed (partial) sequence"
+    },
+    "WF_108": {
+      "cases": 1,
+      "share_of_released": 0.0667,
+      "completed": 0,
+      "early_exit_probability": 1.0,
+      "early_exit_points": {
+        "/hbw/get_empty_bucket (success)": 1
+      },
+      "early_exit_after_n_steps": {
+        "13": 1.0
+      },
+      "failed_attempts": 0,
+      "main_sequence": [
+        "/hbw/unload",
+        "/vgr/pick_up_and_transport",
+        "/hbw/store_empty_bucket",
+        "/ov/burn",
+        "/wt/pick_up_and_transport",
+        "/mm/drill",
+        "/mm/deburr",
+        "/sm/sort",
+        "/vgr/pick_up_and_transport",
+        "/vgr/pick_up_and_transport",
+        "/hw/human_review",
+        "/vgr/pick_up_and_transport",
+        "/hbw/get_empty_bucket"
+      ],
+      "main_sequence_share": null,
+      "resources_by_step": [
+        {
+          "hbw_2": 1.0
+        },
+        {
+          "vgr_2": 1.0
+        },
+        {
+          "hbw_2": 1.0
+        },
+        {
+          "ov_2": 1.0
+        },
+        {
+          "wt_2": 1.0
+        },
+        {
+          "mm_2": 1.0
+        },
+        {
+          "mm_2": 1.0
+        },
+        {
+          "sm_2": 1.0
+        },
+        {
+          "vgr_2": 1.0
+        },
+        {
+          "vgr_1": 1.0
+        },
+        {
+          "hw_1": 1.0
+        },
+        {
+          "vgr_1": 1.0
+        },
+        {
+          "hbw_1": 1.0
+        }
+      ],
+      "note": "no complete case of this variant; main_sequence is the longest observed (partial) sequence"
+    },
+    "WF_109": {
+      "cases": 1,
+      "share_of_released": 0.0667,
+      "completed": 0,
+      "early_exit_probability": 1.0,
+      "early_exit_points": {
+        "/hbw/get_empty_bucket (success)": 1
+      },
+      "early_exit_after_n_steps": {
+        "14": 1.0
+      },
+      "failed_attempts": 1,
+      "main_sequence": [
+        "/hbw/unload",
+        "/vgr/pick_up_and_transport",
+        "/hbw/store_empty_bucket",
+        "/vgr/pick_up_and_transport",
+        "/ov/burn",
+        "/ov/temper",
+        "/wt/pick_up_and_transport",
+        "/mm/mill",
+        "/mm/deburr",
+        "/sm/transport",
+        "/pm/punch_ribbing",
+        "/vgr/pick_up_and_transport",
+        "/hw/human_review",
+        "/hbw/get_empty_bucket"
+      ],
+      "main_sequence_share": null,
+      "resources_by_step": [
+        {
+          "hbw_2": 1.0
+        },
+        {
+          "vgr_2": 1.0
+        },
+        {
+          "hbw_2": 1.0
+        },
+        {
+          "vgr_1": 1.0
+        },
+        {
+          "ov_1": 1.0
+        },
+        {
+          "ov_1": 1.0
+        },
+        {
+          "wt_1": 1.0
+        },
+        {
+          "mm_1": 1.0
+        },
+        {
+          "mm_1": 1.0
+        },
+        {
+          "sm_1": 1.0
+        },
+        {
+          "pm_1": 1.0
+        },
+        {
+          "vgr_1": 1.0
+        },
+        {
+          "hw_1": 1.0
+        },
+        {
+          "hbw_1": 1.0
+        }
+      ],
+      "note": "no complete case of this variant; main_sequence is the longest observed (partial) sequence"
+    },
+    "WF_1106": {
+      "cases": 2,
+      "share_of_released": 0.1333,
+      "completed": 1,
+      "early_exit_probability": 0.5,
+      "early_exit_points": {
+        "/vgr/pick_up_and_transport (failure)": 1
+      },
+      "early_exit_after_n_steps": {
+        "9": 1.0
+      },
+      "failed_attempts": 1,
+      "main_sequence": [
+        "/hbw/unload",
+        "/vgr/pick_up_and_transport",
+        "/ov/burn",
+        "/wt/pick_up_and_transport",
+        "/hbw/get_empty_bucket",
+        "/mm/transport_from_to",
+        "/sm/transport",
+        "/dm/cylindrical_drill",
+        "/vgr/pick_up_and_transport",
+        "/hw/human_review",
+        "/vgr/pick_up_and_transport",
+        "/hbw/get_empty_bucket",
+        "/vgr/pick_up_and_transport",
+        "/hbw/store"
+      ],
+      "main_sequence_share": 1.0,
+      "resources_by_step": [
+        {
+          "hbw_2": 1.0
+        },
+        {
+          "vgr_2": 1.0
+        },
+        {
+          "ov_2": 1.0
+        },
+        {
+          "wt_2": 1.0
+        },
+        {
+          "hbw_1": 1.0
+        },
+        {
+          "mm_2": 1.0
+        },
+        {
+          "sm_2": 1.0
+        },
+        {
+          "dm_2": 1.0
+        },
+        {
+          "vgr_1": 1.0
+        },
+        {
+          "hw_1": 1.0
+        },
+        {
+          "vgr_1": 1.0
+        },
+        {
+          "hbw_1": 1.0
+        },
+        {
+          "vgr_1": 1.0
+        },
+        {
+          "hbw_1": 1.0
+        }
+      ],
+      "other_sequences": [],
+      "step_presence_complete_cases": {
+        "/hbw/unload": 1.0,
+        "/vgr/pick_up_and_transport": 1.0,
+        "/hbw/get_empty_bucket": 1.0,
+        "/dm/cylindrical_drill": 1.0,
+        "/wt/pick_up_and_transport": 1.0,
+        "/sm/transport": 1.0,
+        "/hw/human_review": 1.0,
+        "/hbw/store": 1.0,
+        "/mm/transport_from_to": 1.0,
+        "/ov/burn": 1.0
+      }
+    },
+    "WF_1107": {
+      "cases": 2,
+      "share_of_released": 0.1333,
+      "completed": 0,
+      "early_exit_probability": 1.0,
+      "early_exit_points": {
+        "/hbw/get_empty_bucket (success)": 1,
+        "/hbw/store_empty_bucket (success)": 1
+      },
+      "early_exit_after_n_steps": {
+        "3": 0.5,
+        "13": 0.5
+      },
+      "failed_attempts": 0,
+      "main_sequence": [
+        "/hbw/unload",
+        "/vgr/pick_up_and_transport",
+        "/hbw/store_empty_bucket",
+        "/vgr/pick_up_and_transport",
+        "/ov/burn",
+        "/wt/pick_up_and_transport",
+        "/mm/drill",
+        "/sm/transport",
+        "/pm/punch_ribbing",
+        "/vgr/pick_up_and_transport",
+        "/hw/human_review",
+        "/vgr/pick_up_and_transport",
+        "/hbw/get_empty_bucket"
+      ],
+      "main_sequence_share": null,
+      "resources_by_step": [
+        {
+          "hbw_2": 1.0
+        },
+        {
+          "vgr_2": 1.0
+        },
+        {
+          "hbw_2": 1.0
+        },
+        {
+          "vgr_1": 1.0
+        },
+        {
+          "ov_1": 1.0
+        },
+        {
+          "wt_1": 1.0
+        },
+        {
+          "mm_1": 1.0
+        },
+        {
+          "sm_1": 1.0
+        },
+        {
+          "pm_1": 1.0
+        },
+        {
+          "vgr_1": 1.0
+        },
+        {
+          "hw_1": 1.0
+        },
+        {
+          "vgr_1": 1.0
+        },
+        {
+          "hbw_1": 1.0
+        }
+      ],
+      "note": "no complete case of this variant; main_sequence is the longest observed (partial) sequence"
+    }
+  }
+}
